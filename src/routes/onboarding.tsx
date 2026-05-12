@@ -623,7 +623,15 @@ function ChipCheckbox({
           : "border-border bg-secondary/30 hover:border-primary/30 hover:bg-secondary/60"
       }`}
     >
-      <Checkbox checked={checked} className="pointer-events-none" />
+      <span
+        className={`h-4 w-4 shrink-0 rounded-[5px] border grid place-items-center transition-colors ${
+          checked
+            ? "bg-primary border-primary text-primary-foreground"
+            : "border-border bg-background/40 group-hover:border-primary/50"
+        }`}
+      >
+        {checked && <Check className="h-3 w-3" strokeWidth={3} />}
+      </span>
       <span>{label}</span>
     </button>
   );
