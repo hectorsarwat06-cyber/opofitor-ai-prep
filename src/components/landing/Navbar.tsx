@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
 
 export function Navbar() {
@@ -33,7 +34,7 @@ export function Navbar() {
             scrolled ? "glass shadow-[var(--shadow-card)]" : ""
           }`}
         >
-          <a href="#" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-primary blur-md opacity-60 group-hover:opacity-100 transition" />
               <div className="relative h-8 w-8 rounded-lg bg-[image:var(--gradient-primary)] grid place-items-center">
@@ -43,24 +44,24 @@ export function Navbar() {
             <span className="font-display font-bold tracking-tight text-lg">
               opo<span className="text-primary">FIT</span>or
             </span>
-          </a>
+          </Link>
           <div className="hidden md:flex items-center gap-8">
             {links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-px after:w-full after:scale-x-0 after:origin-left after:bg-primary after:transition-transform after:duration-300 hover:after:scale-x-100"
               >
                 {l.label}
               </a>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-              Iniciar sesión
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Link to="/onboarding">Iniciar sesión</Link>
             </Button>
-            <Button variant="hero" size="sm">
-              Empieza Gratis
+            <Button asChild variant="hero" size="sm">
+              <Link to="/onboarding">Empieza Gratis</Link>
             </Button>
           </div>
         </nav>
