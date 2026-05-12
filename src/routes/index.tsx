@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/landing/Navbar";
 import {
@@ -95,12 +95,16 @@ function Hero() {
               Entrena como un atleta de élite — sin entrenadores caros.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button variant="hero" size="xl" className="group">
-                Empieza Gratis
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
+              <Button asChild variant="hero" size="xl" className="group">
+                <Link to="/onboarding">
+                  Empieza Gratis
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
+                </Link>
               </Button>
-              <Button variant="glass" size="xl">
-                <Play className="h-4 w-4" /> Ver Cómo Funciona
+              <Button asChild variant="glass" size="xl">
+                <a href="#funciona">
+                  <Play className="h-4 w-4" /> Ver Cómo Funciona
+                </a>
               </Button>
             </div>
             <div className="mt-8 flex items-center gap-4 text-xs text-muted-foreground">
@@ -426,9 +430,11 @@ function CTA() {
           <p className="text-muted-foreground max-w-lg mx-auto mb-8">
             Sin tarjeta. Sin compromisos. Tu primer plan personalizado listo en 60 segundos.
           </p>
-          <Button variant="hero" size="xl" className="group">
-            Generar Mi Plan
-            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
+          <Button asChild variant="hero" size="xl" className="group">
+            <Link to="/onboarding">
+              Generar Mi Plan
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
+            </Link>
           </Button>
         </div>
       </div>
