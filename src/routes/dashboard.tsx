@@ -6,7 +6,22 @@ import {
   FatigueCard,
   WeeklyPlanCard,
 } from "@/components/landing/Mockups";
-import { Shield, Sparkles, ArrowLeft } from "lucide-react";
+import {
+  Shield,
+  Sparkles,
+  ArrowLeft,
+  Play,
+  RefreshCw,
+  CalendarPlus,
+  Dumbbell,
+  Timer,
+  Heart,
+  Trophy,
+  Target,
+  Zap,
+  TrendingUp,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -44,36 +59,167 @@ function Dashboard() {
         </Button>
       </header>
 
-      <main className="px-4 pt-8 pb-24 max-w-6xl mx-auto animate-fade-up">
-        <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 mb-6">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium">Tu plan está listo</span>
-        </div>
-        <h1 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight">
-          Buenas tardes,{" "}
-          <span className="text-gradient">opositor.</span>
-        </h1>
-        <p className="mt-3 text-muted-foreground max-w-xl">
-          Este es tu primer mesociclo. La IA lo ajustará cada semana según tus
-          marcas reales.
-        </p>
-
-        <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <PullupsCard />
-          <PaceCard />
-          <FatigueCard />
-          <div className="glass rounded-2xl p-5">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Hoy
+      <main className="px-4 pt-8 pb-24 max-w-6xl mx-auto animate-fade-up space-y-10">
+        {/* Welcome */}
+        <section className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1.5 mb-5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium">Plan activo · Semana 6</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight">
+              Buenas tardes, <span className="text-gradient">opositor.</span>
+            </h1>
+            <p className="mt-3 text-muted-foreground max-w-xl">
+              Tu rendimiento sube un 18% esta semana. Hoy toca empujar el ritmo.
             </p>
-            <p className="text-lg font-display font-bold mt-1">Carrera 5x1000</p>
           </div>
-        </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="hero" size="lg">
+              <Play className="h-4 w-4" /> Start Workout
+            </Button>
+            <Button variant="outline" size="lg">
+              <RefreshCw className="h-4 w-4" /> Update Progress
+            </Button>
+            <Button variant="ghost" size="lg">
+              <CalendarPlus className="h-4 w-4" /> Generate New Week
+            </Button>
+          </div>
+        </section>
 
-        <div className="mt-6">
-          <WeeklyPlanCard />
-        </div>
+        {/* Today's workout */}
+        <section className="grid lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 glass rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-40" style={{ background: "var(--gradient-glow)" }} />
+            <div className="relative">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Entreno de hoy</p>
+              <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">Carrera 5×1000m · Ritmo umbral</h2>
+              <div className="mt-5 grid grid-cols-3 gap-4">
+                <Stat icon={Timer} label="Duración" value="48 min" />
+                <Stat icon={Zap} label="Intensidad" value="RPE 8" />
+                <Stat icon={Heart} label="FC objetivo" value="172 bpm" />
+              </div>
+              <div className="mt-6 flex gap-2">
+                <Button variant="hero"><Play className="h-4 w-4" /> Empezar ahora</Button>
+                <Button variant="outline">Ver protocolo</Button>
+              </div>
+            </div>
+          </div>
+          <div className="glass rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Readiness</p>
+              <p className="mt-2 text-5xl font-display font-bold text-gradient">86</p>
+              <p className="text-xs text-muted-foreground mt-1">Listo para alta intensidad</p>
+            </div>
+            <div className="mt-6 space-y-3">
+              <Bar label="Sueño" value={92} />
+              <Bar label="HRV" value={74} />
+              <Bar label="Carga" value={61} />
+            </div>
+          </div>
+        </section>
+
+        {/* Performance widgets */}
+        <section>
+          <SectionTitle icon={TrendingUp} title="Rendimiento" subtitle="Tus métricas clave de la semana" />
+          <div className="mt-5 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <PullupsCard />
+            <PaceCard />
+            <FatigueCard />
+          </div>
+        </section>
+
+        {/* Weekly calendar */}
+        <section>
+          <SectionTitle icon={CalendarPlus} title="Calendario semanal" subtitle="Tu mesociclo de carga" />
+          <div className="mt-5">
+            <WeeklyPlanCard />
+          </div>
+        </section>
+
+        {/* Progress statistics */}
+        <section>
+          <SectionTitle icon={Trophy} title="Estadísticas de progreso" subtitle="Desde tu primer test" />
+          <div className="mt-5 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ProgressStat icon={Dumbbell} label="Dominadas máx." value="14" delta="+10" />
+            <ProgressStat icon={Timer} label="Mejor 1000m" value="3:42" delta="-0:38" />
+            <ProgressStat icon={Target} label="Sesiones" value="38" delta="+38" />
+            <ProgressStat icon={Trophy} label="Score test" value="8.6" delta="+2.1" />
+          </div>
+
+          <div className="mt-6 glass rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Evolución global</p>
+                <p className="text-lg font-display font-bold">Score físico</p>
+              </div>
+              <span className="text-sm text-primary font-medium">+42%</span>
+            </div>
+            <svg viewBox="0 0 600 160" className="w-full h-40">
+              <defs>
+                <linearGradient id="evoGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.72 0.22 250)" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="oklch(0.72 0.22 250)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,130 C60,125 100,110 160,100 C220,90 260,80 320,65 C380,50 420,45 480,30 C540,18 580,20 600,15 L600,160 L0,160 Z" fill="url(#evoGrad)" />
+              <path d="M0,130 C60,125 100,110 160,100 C220,90 260,80 320,65 C380,50 420,45 480,30 C540,18 580,20 600,15" stroke="oklch(0.72 0.22 250)" strokeWidth="2.5" fill="none" />
+            </svg>
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+              <span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span><span>S6</span>
+            </div>
+          </div>
+        </section>
       </main>
+    </div>
+  );
+}
+
+function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <Icon className="h-4 w-4 text-primary mb-2" />
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-lg font-display font-bold mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function Bar({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium">{value}%</span>
+      </div>
+      <Progress value={value} className="h-1.5" />
+    </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-9 w-9 rounded-lg glass grid place-items-center">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div>
+        <h2 className="text-xl font-display font-bold">{title}</h2>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function ProgressStat({ icon: Icon, label, value, delta }: { icon: any; label: string; value: string; delta: string }) {
+  return (
+    <div className="glass rounded-2xl p-5 hover:border-primary/40 transition-colors">
+      <div className="flex items-center justify-between">
+        <Icon className="h-4 w-4 text-primary" />
+        <span className="text-[10px] font-medium text-primary">{delta}</span>
+      </div>
+      <p className="text-2xl font-display font-bold mt-3">{value}</p>
+      <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
