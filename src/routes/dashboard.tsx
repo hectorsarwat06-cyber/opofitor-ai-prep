@@ -5,6 +5,7 @@ import {
   PaceCard,
   FatigueCard,
   WeeklyPlanCard,
+  WEEK_PLAN,
 } from "@/components/landing/Mockups";
 import {
   Shield,
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
+  const todayIdx = Math.min(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, WEEK_PLAN.length - 1);
+  const today = WEEK_PLAN[todayIdx];
   return (
     <div className="min-h-screen bg-background text-foreground relative">
       <div
@@ -75,8 +78,10 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="hero" size="lg">
-              <Play className="h-4 w-4" /> Start Workout
+            <Button asChild variant="hero" size="lg">
+              <Link to="/workout-session">
+                <Play className="h-4 w-4" /> Start Workout
+              </Link>
             </Button>
             <Button variant="outline" size="lg">
               <RefreshCw className="h-4 w-4" /> Update Progress
@@ -92,15 +97,18 @@ function Dashboard() {
           <div className="lg:col-span-2 glass rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-40" style={{ background: "var(--gradient-glow)" }} />
             <div className="relative">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Entreno de hoy</p>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">Carrera 5×1000m · Ritmo umbral</h2>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">{today.label} · Entreno de hoy</p>
+              <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">{today.title}</h2>
+              <p className="text-sm text-muted-foreground mt-2">{today.detail}</p>
               <div className="mt-5 grid grid-cols-3 gap-4">
-                <Stat icon={Timer} label="Duración" value="48 min" />
-                <Stat icon={Zap} label="Intensidad" value="RPE 8" />
-                <Stat icon={Heart} label="FC objetivo" value="172 bpm" />
+                <Stat icon={Timer} label="Duración" value="55 min" />
+                <Stat icon={Zap} label="Carga" value={today.tag} />
+                <Stat icon={Heart} label="FC objetivo" value="170-180 bpm" />
               </div>
               <div className="mt-6 flex gap-2">
-                <Button variant="hero"><Play className="h-4 w-4" /> Empezar ahora</Button>
+                <Button asChild variant="hero">
+                  <Link to="/workout-session"><Play className="h-4 w-4" /> Empezar ahora</Link>
+                </Button>
                 <Button variant="outline">Ver protocolo</Button>
               </div>
             </div>
@@ -133,7 +141,7 @@ function Dashboard() {
         <section>
           <SectionTitle icon={CalendarPlus} title="Calendario semanal" subtitle="Tu mesociclo de carga" />
           <div className="mt-5">
-            <WeeklyPlanCard />
+            <WeeklyPlanCard activeIndex={todayIdx} />
           </div>
         </section>
 
