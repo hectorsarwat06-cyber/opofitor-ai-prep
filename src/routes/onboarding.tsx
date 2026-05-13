@@ -199,9 +199,14 @@ function Onboarding() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    try {
+      localStorage.setItem("opofitor_onboarding", JSON.stringify(data));
+      if (data.examDate) localStorage.setItem("opofitor_exam_date", data.examDate);
+      localStorage.setItem("opofitor_start_date", new Date().toISOString());
+    } catch {}
     // Simulate AI plan generation
     await new Promise((r) => setTimeout(r, 2200));
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/test-inicial" });
   };
 
   if (submitting) {
