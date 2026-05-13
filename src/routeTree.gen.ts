@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkoutSessionRouteImport } from './routes/workout-session'
+import { Route as TestInicialRouteImport } from './routes/test-inicial'
 import { Route as PlanSemanalRouteImport } from './routes/plan-semanal'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,9 +22,19 @@ const WorkoutSessionRoute = WorkoutSessionRouteImport.update({
   path: '/workout-session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TestInicialRoute = TestInicialRouteImport.update({
+  id: '/test-inicial',
+  path: '/test-inicial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanSemanalRoute = PlanSemanalRouteImport.update({
   id: '/plan-semanal',
   path: '/plan-semanal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -45,14 +57,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/perfil': typeof PerfilRoute
   '/plan-semanal': typeof PlanSemanalRoute
+  '/test-inicial': typeof TestInicialRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/perfil': typeof PerfilRoute
   '/plan-semanal': typeof PlanSemanalRoute
+  '/test-inicial': typeof TestInicialRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRoutesById {
@@ -60,7 +76,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/perfil': typeof PerfilRoute
   '/plan-semanal': typeof PlanSemanalRoute
+  '/test-inicial': typeof TestInicialRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRouteTypes {
@@ -69,16 +87,27 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/onboarding'
+    | '/perfil'
     | '/plan-semanal'
+    | '/test-inicial'
     | '/workout-session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/onboarding' | '/plan-semanal' | '/workout-session'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/onboarding'
+    | '/perfil'
+    | '/plan-semanal'
+    | '/test-inicial'
+    | '/workout-session'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/onboarding'
+    | '/perfil'
     | '/plan-semanal'
+    | '/test-inicial'
     | '/workout-session'
   fileRoutesById: FileRoutesById
 }
@@ -86,7 +115,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   OnboardingRoute: typeof OnboardingRoute
+  PerfilRoute: typeof PerfilRoute
   PlanSemanalRoute: typeof PlanSemanalRoute
+  TestInicialRoute: typeof TestInicialRoute
   WorkoutSessionRoute: typeof WorkoutSessionRoute
 }
 
@@ -99,11 +130,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkoutSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/test-inicial': {
+      id: '/test-inicial'
+      path: '/test-inicial'
+      fullPath: '/test-inicial'
+      preLoaderRoute: typeof TestInicialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan-semanal': {
       id: '/plan-semanal'
       path: '/plan-semanal'
       fullPath: '/plan-semanal'
       preLoaderRoute: typeof PlanSemanalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -134,7 +179,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   OnboardingRoute: OnboardingRoute,
+  PerfilRoute: PerfilRoute,
   PlanSemanalRoute: PlanSemanalRoute,
+  TestInicialRoute: TestInicialRoute,
   WorkoutSessionRoute: WorkoutSessionRoute,
 }
 export const routeTree = rootRouteImport
