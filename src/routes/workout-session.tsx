@@ -132,11 +132,16 @@ function WorkoutSession() {
             opo<span className="text-primary">FIT</span>or
           </span>
         </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/plan-semanal">Plan semanal</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" /> Dashboard
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="px-4 pb-32 max-w-4xl mx-auto animate-fade-up space-y-6">
