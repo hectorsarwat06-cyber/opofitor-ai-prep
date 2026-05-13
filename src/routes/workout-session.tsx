@@ -1,10 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -55,14 +64,33 @@ function WorkoutSession() {
     day: "numeric",
     month: "long",
   });
+  const navigate = useNavigate();
   const [sessionRPE, setSessionRPE] = useState<number[]>([7]);
+  const [rpeOpen, setRpeOpen] = useState(false);
   const [finished, setFinished] = useState(false);
 
+  const handleFinish = () => {
+    try {
+      const raw = localStorage.getItem("opofitor_history");
+      const hist = raw ? JSON.parse(raw) : [];
+      hist.unshift({
+        date: new Date().toISOString(),
+        rpe: sessionRPE[0],
+        title: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
+        achievement: `Dominadas 4×3-4 RIR 2 · 2×(6×200m) sRPE ${sessionRPE[0]}`,
+      });
+      localStorage.setItem("opofitor_history", JSON.stringify(hist.slice(0, 30)));
+    } catch {}
+    setFinished(true);
+    setRpeOpen(false);
+    setTimeout(() => navigate({ to: "/plan-semanal" }), 700);
+  };
+
   const pullupSets = [
-    { set: 1, reps: "4", load: "+12 kg", pct: "80% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "3:00" },
-    { set: 2, reps: "4", load: "+13 kg", pct: "82% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "3:30" },
-    { set: 3, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "4:00" },
-    { set: 4, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "4:00" },
+    { set: 1, reps: "4", load: "+12 kg", pct: "80% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:00" },
+    { set: 2, reps: "4", load: "+13 kg", pct: "82% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:30" },
+    { set: 3, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
+    { set: 4, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
   ];
 
   const runBlocks = [
@@ -70,18 +98,18 @@ function WorkoutSession() {
       block: "A",
       reps: Array.from({ length: 6 }, (_, i) => ({
         i: i + 1,
-        target: "35.0 s",
+        target: "39.0 s",
         pace: i % 2 === 0 ? "110% VAM" : "112% VAM",
-        rest: "35 s pasivo",
+        rest: "40 s pasivo",
       })),
     },
     {
       block: "B",
       reps: Array.from({ length: 6 }, (_, i) => ({
         i: i + 1,
-        target: i < 3 ? "34.5 s" : "34.0 s",
+        target: i < 3 ? "38.5 s" : "38.0 s",
         pace: "115% VAM",
-        rest: "35 s pasivo",
+        rest: "40 s pasivo",
       })),
     },
   ];
