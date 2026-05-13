@@ -55,11 +55,18 @@ function Dashboard() {
             opo<span className="text-primary">FIT</span>or
           </span>
         </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/">
-            <ArrowLeft className="h-4 w-4" /> Home
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/plan-semanal">
+              <CalendarPlus className="h-4 w-4" /> Plan semanal
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" /> Home
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="px-4 pt-8 pb-24 max-w-6xl mx-auto animate-fade-up space-y-10">
