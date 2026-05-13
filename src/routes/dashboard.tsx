@@ -254,3 +254,79 @@ function ProgressStat({ icon: Icon, label, value, delta }: { icon: any; label: s
     </div>
   );
 }
+
+function useMacrocycle() {
+  const [state, setState] = useState({
+    week: 1,
+    day: 1,
+    phase: "Adaptación",
+    totalWeeks: 16,
+    examDate: "" as string,
+  });
+  useEffect(() => {
+    try {
+      const startIso =
+        localStorage.getItem("opofitor_macrocycle_start") ||
+        localStorage.getItem("opofitor_start_date");
+      const examDate =
+        localStorage.getItem("opofitor_exam_date") ||
+        JSON.parse(localStorage.getItem("opofitor_onboarding") || "{}").examDate ||
+        "";
+      const start = startIso ? new Date(startIso) : new Date();
+      const now = new Date();
+      const daysSince = Math.max(0, Math.floor((now.getTime() - start.getTime()) / 86400000));
+      const week = Math.floor(daysSince / 7) + 1;
+      const day = (daysSince % 7) + 1;
+      let totalWeeks = 16;
+      if (examDate) {
+        const target = new Date(examDate).getTime();
+        totalWeeks = Math.max(week, Math.ceil((target - start.getTime()) / (86400000 * 7)));
+      }
+      const phase =
+        week <= 4 ? "Adaptación" : week <= 9 ? "Acumulación" : week <= 13 ? "Intensificación" : "Realización";
+      setState({ week, day, phase, totalWeeks, examDate });
+    } catch {}
+  }, []);
+  return state;
+}
+
+function MacroTimeline({ week, totalWeeks, examDate }: { week: number; totalWeeks: number; examDate: string }) {
+  const pct = Math.min(100, Math.max(2, (week / totalWeeks) * 100));
+  const examLabel = examDate
+    ? new Date(examDate).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })
+    : "Sin fecha";
+  const remaining = Math.max(0, totalWeeks - week);
+  return (
+    <div>
+      <div className="flex items-end justify-between text-xs mb-2">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Hoy</p>
+          <p className="font-display font-bold text-base">Semana {week}</p>
+        </div>
+        <p className="text-muted-foreground">{remaining} semanas restantes</p>
+        <div className="text-right">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Examen</p>
+          <p className="font-display font-bold text-base flex items-center gap-1 justify-end">
+            <Flag className="h-3.5 w-3.5 text-primary" /> {examLabel}
+          </p>
+        </div>
+      </div>
+      <div className="relative h-2 rounded-full bg-card border border-border overflow-hidden">
+        <div
+          className="absolute left-0 top-0 h-full bg-[image:var(--gradient-primary)] transition-all"
+          style={{ width: `${pct}%` }}
+        />
+        <div
+          className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-primary border-2 border-background shadow-[var(--shadow-glow)]"
+          style={{ left: `calc(${pct}% - 8px)` }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
+        <span>S1 · Adaptación</span>
+        <span>Acumulación</span>
+        <span>Intensificación</span>
+        <span>S{totalWeeks} · Pico</span>
+      </div>
+    </div>
+  );
+}
