@@ -1,10 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -55,14 +63,33 @@ function WorkoutSession() {
     day: "numeric",
     month: "long",
   });
+  const navigate = useNavigate();
   const [sessionRPE, setSessionRPE] = useState<number[]>([7]);
+  const [rpeOpen, setRpeOpen] = useState(false);
   const [finished, setFinished] = useState(false);
 
+  const handleFinish = () => {
+    try {
+      const raw = localStorage.getItem("opofitor_history");
+      const hist = raw ? JSON.parse(raw) : [];
+      hist.unshift({
+        date: new Date().toISOString(),
+        rpe: sessionRPE[0],
+        title: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
+        achievement: `Dominadas 4×3-4 RIR 2 · 2×(6×200m) sRPE ${sessionRPE[0]}`,
+      });
+      localStorage.setItem("opofitor_history", JSON.stringify(hist.slice(0, 30)));
+    } catch {}
+    setFinished(true);
+    setRpeOpen(false);
+    setTimeout(() => navigate({ to: "/plan-semanal" }), 700);
+  };
+
   const pullupSets = [
-    { set: 1, reps: "4", load: "+12 kg", pct: "80% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "3:00" },
-    { set: 2, reps: "4", load: "+13 kg", pct: "82% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "3:30" },
-    { set: 3, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "4:00" },
-    { set: 4, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "2:0:X:1", rest: "4:00" },
+    { set: 1, reps: "4", load: "+12 kg", pct: "80% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:00" },
+    { set: 2, reps: "4", load: "+13 kg", pct: "82% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:30" },
+    { set: 3, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
+    { set: 4, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
   ];
 
   const runBlocks = [
@@ -70,18 +97,18 @@ function WorkoutSession() {
       block: "A",
       reps: Array.from({ length: 6 }, (_, i) => ({
         i: i + 1,
-        target: "35.0 s",
+        target: "39.0 s",
         pace: i % 2 === 0 ? "110% VAM" : "112% VAM",
-        rest: "35 s pasivo",
+        rest: "40 s pasivo",
       })),
     },
     {
       block: "B",
       reps: Array.from({ length: 6 }, (_, i) => ({
         i: i + 1,
-        target: i < 3 ? "34.5 s" : "34.0 s",
+        target: i < 3 ? "38.5 s" : "38.0 s",
         pace: "115% VAM",
-        rest: "35 s pasivo",
+        rest: "40 s pasivo",
       })),
     },
   ];
@@ -104,11 +131,16 @@ function WorkoutSession() {
             opo<span className="text-primary">FIT</span>or
           </span>
         </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/plan-semanal">Plan semanal</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" /> Dashboard
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="px-4 pb-32 max-w-4xl mx-auto animate-fade-up space-y-6">
@@ -346,6 +378,12 @@ function WorkoutSession() {
                       </div>
                     ))}
                   </div>
+                  <div className="px-3 py-3 border-t border-border bg-card/20 grid grid-cols-[1fr_auto] items-center gap-3">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Tiempo medio del bloque
+                    </span>
+                    <Input placeholder="ej. 38.6 s" className="h-8 w-28 text-xs" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -394,61 +432,96 @@ function WorkoutSession() {
         </Accordion>
 
         {/* Footer actions */}
-        <section className="glass rounded-2xl p-6 space-y-5">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Session RPE (CR-10 Borg)
-                </p>
-                <p className="text-sm">Percepción global del esfuerzo de la sesión</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-display font-bold text-gradient">
-                  {sessionRPE[0]}
-                </p>
-                <p className="text-[10px] text-muted-foreground">/ 10</p>
-              </div>
+        <section className="glass rounded-2xl p-6 space-y-3 text-center">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            ¿Has terminado?
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Registraremos tu esfuerzo percibido (RPE) para ajustar la carga semanal.
+          </p>
+          <Button
+            variant="hero"
+            size="xl"
+            className="w-full"
+            onClick={() => setRpeOpen(true)}
+            disabled={finished}
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {finished ? "¡Sesión guardada!" : "Finalizar Sesión"}
+          </Button>
+        </section>
+      </main>
+
+      {/* RPE Dialog */}
+      <Dialog open={rpeOpen} onOpenChange={setRpeOpen}>
+        <DialogContent className="glass border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              ¿Qué tan duro ha sido el entrenamiento hoy?
+            </DialogTitle>
+            <DialogDescription>
+              Escala RPE de Borg (CR-10) — percepción global del esfuerzo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-5">
+            <div className="text-center">
+              <p className="text-6xl font-display font-bold text-gradient leading-none">
+                {sessionRPE[0]}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">/ 10</p>
+              <p className="text-sm mt-2 text-foreground/80">
+                {rpeLabel(sessionRPE[0])}
+              </p>
             </div>
+
             <Slider
               value={sessionRPE}
               onValueChange={setSessionRPE}
               min={1}
               max={10}
               step={1}
-              className="mt-4"
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-              <span>Muy fácil</span>
-              <span>Máximo esfuerzo</span>
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>1 · Muy fácil</span>
+              <span>10 · Máximo</span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
+
+            <div className="rounded-lg border border-border bg-card/40 p-3 flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Activity className="h-3.5 w-3.5 text-primary" />
-                Carga sRPE:{" "}
-                <span className="font-medium text-foreground">{totalSrpe} UA</span>
+                Carga sRPE estimada
               </span>
-              <span className="flex items-center gap-1.5">
-                <ChevronRight className="h-3.5 w-3.5 text-primary" />
-                Monotonía semanal:{" "}
-                <span className="font-medium text-foreground">1.4</span>
+              <span className="font-display font-bold text-foreground">
+                {totalSrpe} UA
               </span>
             </div>
           </div>
 
-          <Button
-            variant="hero"
-            size="xl"
-            className="w-full"
-            onClick={() => setFinished(true)}
-          >
-            <CheckCircle2 className="h-5 w-5" />
-            {finished ? "¡Entrenamiento registrado!" : "Finalizar Entrenamiento"}
-          </Button>
-        </section>
-      </main>
+          <DialogFooter className="flex-row gap-2 sm:justify-stretch">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={() => setRpeOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="hero" className="flex-1" onClick={handleFinish}>
+              <ChevronRight className="h-4 w-4" /> Guardar sesión
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function rpeLabel(v: number) {
+  if (v <= 2) return "Muy ligero · recuperación";
+  if (v <= 4) return "Ligero · cómodo";
+  if (v <= 6) return "Moderado · sostenible";
+  if (v <= 8) return "Duro · cerca del límite";
+  return "Máximo · al fallo";
 }
 
 function Metric({
