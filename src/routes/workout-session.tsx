@@ -374,6 +374,12 @@ function WorkoutSession() {
                       </div>
                     ))}
                   </div>
+                  <div className="px-3 py-3 border-t border-border bg-card/20 grid grid-cols-[1fr_auto] items-center gap-3">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Tiempo medio del bloque
+                    </span>
+                    <Input placeholder="ej. 38.6 s" className="h-8 w-28 text-xs" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -422,61 +428,96 @@ function WorkoutSession() {
         </Accordion>
 
         {/* Footer actions */}
-        <section className="glass rounded-2xl p-6 space-y-5">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Session RPE (CR-10 Borg)
-                </p>
-                <p className="text-sm">Percepción global del esfuerzo de la sesión</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-display font-bold text-gradient">
-                  {sessionRPE[0]}
-                </p>
-                <p className="text-[10px] text-muted-foreground">/ 10</p>
-              </div>
+        <section className="glass rounded-2xl p-6 space-y-3 text-center">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            ¿Has terminado?
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Registraremos tu esfuerzo percibido (RPE) para ajustar la carga semanal.
+          </p>
+          <Button
+            variant="hero"
+            size="xl"
+            className="w-full"
+            onClick={() => setRpeOpen(true)}
+            disabled={finished}
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {finished ? "¡Sesión guardada!" : "Finalizar Sesión"}
+          </Button>
+        </section>
+      </main>
+
+      {/* RPE Dialog */}
+      <Dialog open={rpeOpen} onOpenChange={setRpeOpen}>
+        <DialogContent className="glass border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              ¿Qué tan duro ha sido el entrenamiento hoy?
+            </DialogTitle>
+            <DialogDescription>
+              Escala RPE de Borg (CR-10) — percepción global del esfuerzo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-5">
+            <div className="text-center">
+              <p className="text-6xl font-display font-bold text-gradient leading-none">
+                {sessionRPE[0]}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">/ 10</p>
+              <p className="text-sm mt-2 text-foreground/80">
+                {rpeLabel(sessionRPE[0])}
+              </p>
             </div>
+
             <Slider
               value={sessionRPE}
               onValueChange={setSessionRPE}
               min={1}
               max={10}
               step={1}
-              className="mt-4"
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-              <span>Muy fácil</span>
-              <span>Máximo esfuerzo</span>
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>1 · Muy fácil</span>
+              <span>10 · Máximo</span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
+
+            <div className="rounded-lg border border-border bg-card/40 p-3 flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Activity className="h-3.5 w-3.5 text-primary" />
-                Carga sRPE:{" "}
-                <span className="font-medium text-foreground">{totalSrpe} UA</span>
+                Carga sRPE estimada
               </span>
-              <span className="flex items-center gap-1.5">
-                <ChevronRight className="h-3.5 w-3.5 text-primary" />
-                Monotonía semanal:{" "}
-                <span className="font-medium text-foreground">1.4</span>
+              <span className="font-display font-bold text-foreground">
+                {totalSrpe} UA
               </span>
             </div>
           </div>
 
-          <Button
-            variant="hero"
-            size="xl"
-            className="w-full"
-            onClick={() => setFinished(true)}
-          >
-            <CheckCircle2 className="h-5 w-5" />
-            {finished ? "¡Entrenamiento registrado!" : "Finalizar Entrenamiento"}
-          </Button>
-        </section>
-      </main>
+          <DialogFooter className="flex-row gap-2 sm:justify-stretch">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={() => setRpeOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="hero" className="flex-1" onClick={handleFinish}>
+              <ChevronRight className="h-4 w-4" /> Guardar sesión
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function rpeLabel(v: number) {
+  if (v <= 2) return "Muy ligero · recuperación";
+  if (v <= 4) return "Ligero · cómodo";
+  if (v <= 6) return "Moderado · sostenible";
+  if (v <= 8) return "Duro · cerca del límite";
+  return "Máximo · al fallo";
 }
 
 function Metric({
