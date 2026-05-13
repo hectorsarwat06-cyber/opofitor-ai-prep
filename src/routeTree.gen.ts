@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkoutSessionRouteImport } from './routes/workout-session'
+import { Route as PlanSemanalRouteImport } from './routes/plan-semanal'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const WorkoutSessionRoute = WorkoutSessionRouteImport.update({
   id: '/workout-session',
   path: '/workout-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanSemanalRoute = PlanSemanalRouteImport.update({
+  id: '/plan-semanal',
+  path: '/plan-semanal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan-semanal': typeof PlanSemanalRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan-semanal': typeof PlanSemanalRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan-semanal': typeof PlanSemanalRoute
   '/workout-session': typeof WorkoutSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/onboarding' | '/workout-session'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/onboarding'
+    | '/plan-semanal'
+    | '/workout-session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/onboarding' | '/workout-session'
-  id: '__root__' | '/' | '/dashboard' | '/onboarding' | '/workout-session'
+  to: '/' | '/dashboard' | '/onboarding' | '/plan-semanal' | '/workout-session'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/onboarding'
+    | '/plan-semanal'
+    | '/workout-session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   OnboardingRoute: typeof OnboardingRoute
+  PlanSemanalRoute: typeof PlanSemanalRoute
   WorkoutSessionRoute: typeof WorkoutSessionRoute
 }
 
@@ -76,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: '/workout-session'
       fullPath: '/workout-session'
       preLoaderRoute: typeof WorkoutSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan-semanal': {
+      id: '/plan-semanal'
+      path: '/plan-semanal'
+      fullPath: '/plan-semanal'
+      preLoaderRoute: typeof PlanSemanalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -106,8 +134,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   OnboardingRoute: OnboardingRoute,
+  PlanSemanalRoute: PlanSemanalRoute,
   WorkoutSessionRoute: WorkoutSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
