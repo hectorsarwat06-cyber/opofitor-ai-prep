@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { useRequireAuth } from "@/hooks/use-auth";
 import { TopNav } from "@/components/landing/TopNav";
 import {
   PullupsCard,
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
+  useRequireAuth();
   const todayIdx = Math.min(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, WEEK_PLAN.length - 1);
   const today = WEEK_PLAN[todayIdx];
   const macro = useMacrocycle();
