@@ -206,7 +206,7 @@ function Onboarding() {
     } catch {}
     // Simulate AI plan generation
     await new Promise((r) => setTimeout(r, 2200));
-    navigate({ to: "/test-inicial" });
+    navigate({ to: "/auth" });
   };
 
   if (submitting) {
