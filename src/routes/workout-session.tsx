@@ -537,8 +537,12 @@ function WorkoutSession() {
             >
               Cancelar
             </Button>
-            <Button variant="hero" className="flex-1" onClick={handleFinish}>
-              <ChevronRight className="h-4 w-4" /> Guardar sesión
+            <Button variant="hero" className="flex-1" onClick={handleFinish} disabled={saving}>
+              {saving ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Guardando…</>
+              ) : (
+                <><ChevronRight className="h-4 w-4" /> Guardar sesión</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
