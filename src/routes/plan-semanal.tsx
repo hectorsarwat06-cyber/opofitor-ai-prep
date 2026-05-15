@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { WEEK_PLAN } from "@/components/landing/Mockups";
 import {
@@ -49,6 +50,7 @@ function daysAgo(n: number) {
 }
 
 function PlanSemanal() {
+  useRequireAuth();
   const navigate = useNavigate();
   const todayIdx = Math.min(
     new Date().getDay() === 0 ? 6 : new Date().getDay() - 1,
