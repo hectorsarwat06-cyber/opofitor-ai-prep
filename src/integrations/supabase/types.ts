@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      entrenamientos_log: {
+        Row: {
+          created_at: string
+          fecha_sesion: string
+          id: string
+          notas: string | null
+          repeticiones_dominadas: string | null
+          rpe_sesion: number
+          tiempo_medio_series: string | null
+          tipo_sesion: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fecha_sesion?: string
+          id?: string
+          notas?: string | null
+          repeticiones_dominadas?: string | null
+          rpe_sesion: number
+          tiempo_medio_series?: string | null
+          tipo_sesion: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fecha_sesion?: string
+          id?: string
+          notas?: string | null
+          repeticiones_dominadas?: string | null
+          rpe_sesion?: number
+          tiempo_medio_series?: string | null
+          tipo_sesion?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      evaluaciones: {
+        Row: {
+          created_at: string
+          fecha_test: string
+          id: string
+          max_dominadas: number
+          tiempo_1000m: string
+          user_id: string
+          vam_estimada: number | null
+        }
+        Insert: {
+          created_at?: string
+          fecha_test?: string
+          id?: string
+          max_dominadas: number
+          tiempo_1000m: string
+          user_id: string
+          vam_estimada?: number | null
+        }
+        Update: {
+          created_at?: string
+          fecha_test?: string
+          id?: string
+          max_dominadas?: number
+          tiempo_1000m?: string
+          user_id?: string
+          vam_estimada?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          altura: number | null
+          created_at: string
+          dias_disponibles: string[] | null
+          fecha_examen: string | null
+          id: string
+          peso: number | null
+          updated_at: string
+        }
+        Insert: {
+          altura?: number | null
+          created_at?: string
+          dias_disponibles?: string[] | null
+          fecha_examen?: string | null
+          id: string
+          peso?: number | null
+          updated_at?: string
+        }
+        Update: {
+          altura?: number | null
+          created_at?: string
+          dias_disponibles?: string[] | null
+          fecha_examen?: string | null
+          id?: string
+          peso?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
