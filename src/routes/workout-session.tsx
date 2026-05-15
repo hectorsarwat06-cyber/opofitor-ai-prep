@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -41,6 +44,7 @@ import {
   Repeat,
   Wind,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/workout-session")({
@@ -58,6 +62,7 @@ export const Route = createFileRoute("/workout-session")({
 });
 
 function WorkoutSession() {
+  useRequireAuth();
   const today = new Date().toLocaleDateString("es-ES", {
     weekday: "long",
     day: "numeric",
@@ -67,22 +72,48 @@ function WorkoutSession() {
   const [sessionRPE, setSessionRPE] = useState<number[]>([7]);
   const [rpeOpen, setRpeOpen] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    setSaving(true);
+    const rpe = sessionRPE[0];
+    const repsLog = "4×3-4 lastradas RIR 2";
+    const tiempoSeries = "media 38.7 s / 200 m";
     try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) {
+        toast.error("Sesión expirada. Inicia sesión.");
+        navigate({ to: "/auth" });
+        return;
+      }
+      const { error: insErr } = await supabase.from("entrenamientos_log").insert({
+        user_id: u.user.id,
+        tipo_sesion: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
+        rpe_sesion: rpe,
+        repeticiones_dominadas: repsLog,
+        tiempo_medio_series: tiempoSeries,
+      });
+      if (insErr) throw insErr;
+
       const raw = localStorage.getItem("opofitor_history");
       const hist = raw ? JSON.parse(raw) : [];
       hist.unshift({
         date: new Date().toISOString(),
-        rpe: sessionRPE[0],
+        rpe,
         title: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
-        achievement: `Dominadas 4×3-4 RIR 2 · 2×(6×200m) sRPE ${sessionRPE[0]}`,
+        achievement: `Dominadas 4×3-4 RIR 2 · 2×(6×200m) sRPE ${rpe}`,
       });
       localStorage.setItem("opofitor_history", JSON.stringify(hist.slice(0, 30)));
-    } catch {}
-    setFinished(true);
-    setRpeOpen(false);
-    setTimeout(() => navigate({ to: "/plan-semanal" }), 700);
+      toast.success("Sesión guardada correctamente");
+      setFinished(true);
+      setRpeOpen(false);
+      setTimeout(() => navigate({ to: "/plan-semanal" }), 700);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo guardar la sesión";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const pullupSets = [
