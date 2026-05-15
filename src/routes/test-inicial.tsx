@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +20,7 @@ export const Route = createFileRoute("/test-inicial")({
 
 function TestInicial() {
   const navigate = useNavigate();
+  useRequireAuth();
   const [minutes, setMinutes] = useState("");
   const [seconds, setSeconds] = useState("");
   const [pullups, setPullups] = useState("");
@@ -33,14 +37,37 @@ function TestInicial() {
     }
     setError(null);
     setGenerating(true);
+    const tiempo = `${m}:${String(s).padStart(2, "0")}`;
+    const totalSec = m * 60 + s;
+    // VAM ≈ 1000m / tiempo en min, simplificado a km/h
+    const vam = Math.round((1000 / totalSec) * 3.6 * 10) / 10;
     try {
       localStorage.setItem(
         "opofitor_initial_test",
-        JSON.stringify({ run1000: `${m}:${String(s).padStart(2, "0")}`, runSeconds: m * 60 + s, pullups: p, date: new Date().toISOString() }),
+        JSON.stringify({ run1000: tiempo, runSeconds: totalSec, pullups: p, vam, date: new Date().toISOString() }),
       );
       localStorage.setItem("opofitor_macrocycle_start", new Date().toISOString());
-    } catch {}
-    await new Promise((r) => setTimeout(r, 2400));
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) {
+        toast.error("Necesitas iniciar sesión");
+        navigate({ to: "/auth" });
+        return;
+      }
+      const { error: insErr } = await supabase.from("evaluaciones").insert({
+        user_id: u.user.id,
+        tiempo_1000m: tiempo,
+        max_dominadas: p,
+        vam_estimada: vam,
+      });
+      if (insErr) throw insErr;
+      toast.success("Macrociclo generado y marcas guardadas");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error guardando los datos";
+      toast.error(msg);
+      setGenerating(false);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1800));
     navigate({ to: "/dashboard" });
   };
 
