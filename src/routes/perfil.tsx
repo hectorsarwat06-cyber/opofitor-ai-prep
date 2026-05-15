@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, User, Scale, Ruler, CalendarDays, Save, Check } from "lucide-react";
+import { Shield, User, Scale, Ruler, CalendarDays, Save, Check, Loader2, LogOut } from "lucide-react";
 import { TopNav } from "@/components/landing/TopNav";
 
 export const Route = createFileRoute("/perfil")({
@@ -27,36 +30,66 @@ const DAYS = [
 ];
 
 function Perfil() {
+  const { user } = useRequireAuth();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [days, setDays] = useState<string[]>(["L", "X", "V"]);
   const [examDate, setExamDate] = useState("");
   const [saved, setSaved] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const onb = JSON.parse(localStorage.getItem("opofitor_onboarding") || "{}");
-      const profile = JSON.parse(localStorage.getItem("opofitor_profile") || "{}");
-      setWeight(String(profile.weight ?? onb.weight ?? ""));
-      setHeight(String(profile.height ?? onb.height ?? ""));
-      setDays(profile.days ?? ["L", "X", "V"]);
-      setExamDate(profile.examDate ?? onb.examDate ?? localStorage.getItem("opofitor_exam_date") ?? "");
-    } catch {}
-  }, []);
+    if (!user) return;
+    (async () => {
+      setLoadingData(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("peso, altura, dias_disponibles, fecha_examen")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (error) {
+        toast.error("No se pudo cargar tu perfil");
+      } else if (data) {
+        setWeight(data.peso != null ? String(data.peso) : "");
+        setHeight(data.altura != null ? String(data.altura) : "");
+        setDays(data.dias_disponibles ?? ["L", "X", "V"]);
+        setExamDate(data.fecha_examen ?? "");
+      }
+      setLoadingData(false);
+    })();
+  }, [user]);
 
   const toggleDay = (k: string) =>
     setDays((prev) => (prev.includes(k) ? prev.filter((d) => d !== k) : [...prev, k]));
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
     try {
-      localStorage.setItem(
-        "opofitor_profile",
-        JSON.stringify({ weight: Number(weight), height: Number(height), days, examDate }),
-      );
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        peso: weight ? Number(weight) : null,
+        altura: height ? Number(height) : null,
+        dias_disponibles: days,
+        fecha_examen: examDate || null,
+      });
+      if (error) throw error;
       if (examDate) localStorage.setItem("opofitor_exam_date", examDate);
-    } catch {}
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+      toast.success("Perfil guardado");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error al guardar";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Sesión cerrada");
   };
 
   return (
@@ -152,8 +185,12 @@ function Perfil() {
         </div>
 
         <div className="mt-8 flex items-center gap-3">
-          <Button variant="hero" size="lg" onClick={handleSave}>
-            <Save className="h-4 w-4" /> Guardar cambios
+          <Button variant="hero" size="lg" onClick={handleSave} disabled={saving || loadingData}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {saving ? "Guardando…" : "Guardar cambios"}
+          </Button>
+          <Button variant="ghost" size="lg" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" /> Cerrar sesión
           </Button>
           {saved && <span className="text-sm text-primary flex items-center gap-1.5"><Check className="h-4 w-4" /> Guardado</span>}
         </div>
