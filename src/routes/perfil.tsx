@@ -90,6 +90,7 @@ function Perfil() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Sesión cerrada");
+    navigate({ to: "/" });
   };
 
   return (
