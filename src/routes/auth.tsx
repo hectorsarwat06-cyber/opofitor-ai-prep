@@ -50,11 +50,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
-          options: { emailRedirectTo: `${window.location.origin}/test-inicial` },
+          options: { emailRedirectTo: `${window.location.origin}/onboarding` },
         });
         if (error) throw error;
         toast.success("Cuenta creada. ¡Bienvenido!");
-        navigate({ to: "/test-inicial" });
+        navigate({ to: "/onboarding" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
@@ -68,9 +68,9 @@ function AuthPage() {
       const msg = err instanceof Error ? err.message : "Error de autenticación";
       toast.error(
         msg.includes("Invalid login")
-          ? "Email o contraseña incorrectos"
+          ? "Correo o contraseña incorrectos"
           : msg.includes("already registered")
-            ? "Este email ya está registrado"
+            ? "Este correo ya está registrado. Por favor, inicia sesión"
             : msg,
       );
     } finally {
