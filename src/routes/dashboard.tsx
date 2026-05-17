@@ -91,12 +91,14 @@ function Dashboard() {
             </div>
             <div className="flex flex-col gap-2">
               <Button asChild variant="hero" size="lg">
-                <Link to="/workout-session"><Play className="h-4 w-4" /> Start Workout</Link>
+                <Link to="/workout-session"><Play className="h-4 w-4" /> Empezar entrenamiento</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to="/plan-semanal"><CalendarPlus className="h-4 w-4" /> Plan semanal</Link>
               </Button>
-              <Button variant="ghost" size="lg"><RefreshCw className="h-4 w-4" /> Update Progress</Button>
+              <Button asChild variant="ghost" size="lg">
+                <Link to="/perfil"><RefreshCw className="h-4 w-4" /> Actualizar progreso</Link>
+              </Button>
             </div>
           </div>
         </section>
