@@ -286,7 +286,7 @@ function WorkoutSession() {
           >
             <ProtocolBar
               items={[
-                { k: "Metodología", v: "Velocity / RIR-based" },
+                { k: "Metodología", v: "Entrenamiento por RIR" },
                 { k: "Sistema", v: "ATP-PCr" },
                 { k: "Intención", v: "Máxima velocidad concéntrica" },
                 { k: "Tempo", v: "2 : 0 : X : 1" },
