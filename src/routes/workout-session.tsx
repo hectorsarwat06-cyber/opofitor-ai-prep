@@ -73,12 +73,24 @@ function WorkoutSession() {
   const [rpeOpen, setRpeOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Registro real por serie de dominadas: reps logradas + peso (kg)
+  const [pullupLog, setPullupLog] = useState<{ reps: string; kg: string }[]>(
+    Array.from({ length: 4 }, () => ({ reps: "", kg: "" })),
+  );
+  // Tiempos reales por bloque de carrera
+  const [runLog, setRunLog] = useState<{ a: string; b: string }>({ a: "", b: "" });
 
   const handleFinish = async () => {
     setSaving(true);
     const rpe = sessionRPE[0];
-    const repsLog = "4×3-4 lastradas RIR 2";
-    const tiempoSeries = "media 38.7 s / 200 m";
+    const repsLog = pullupLog
+      .map((s, i) => {
+        const reps = s.reps.trim() || "—";
+        const kg = s.kg.trim() ? `${s.kg} kg` : "PC";
+        return `S${i + 1}: ${reps} reps @ ${kg}`;
+      })
+      .join(" · ");
+    const tiempoSeries = `Bloque A: ${runLog.a || "—"} · Bloque B: ${runLog.b || "—"}`;
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
@@ -274,7 +286,7 @@ function WorkoutSession() {
           >
             <ProtocolBar
               items={[
-                { k: "Metodología", v: "Velocity / RIR-based" },
+                { k: "Metodología", v: "Entrenamiento por RIR" },
                 { k: "Sistema", v: "ATP-PCr" },
                 { k: "Intención", v: "Máxima velocidad concéntrica" },
                 { k: "Tempo", v: "2 : 0 : X : 1" },
@@ -337,17 +349,36 @@ function WorkoutSession() {
               Registro de ejecución
             </p>
             <div className="space-y-2">
-              {pullupSets.map((s) => (
+              {pullupSets.map((s, idx) => (
                 <div
                   key={s.set}
-                  className="grid grid-cols-[36px_1fr_1fr_1fr] gap-2 items-center rounded-lg border border-border bg-card/40 p-2.5"
+                  className="grid grid-cols-[36px_1fr_1fr] gap-2 items-center rounded-lg border border-border bg-card/40 p-2.5"
                 >
                   <span className="font-display font-bold text-primary text-sm pl-2">
                     #{s.set}
                   </span>
-                  <Input placeholder="Reps reales" className="h-9 text-sm" />
-                  <Input placeholder="Vel. m/s" className="h-9 text-sm" />
-                  <Input placeholder="RPE 1-10" className="h-9 text-sm" />
+                  <Input
+                    inputMode="numeric"
+                    placeholder="Repeticiones logradas"
+                    className="h-9 text-sm"
+                    value={pullupLog[idx]?.reps ?? ""}
+                    onChange={(e) =>
+                      setPullupLog((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, reps: e.target.value } : p)),
+                      )
+                    }
+                  />
+                  <Input
+                    inputMode="decimal"
+                    placeholder="Peso utilizado (kg)"
+                    className="h-9 text-sm"
+                    value={pullupLog[idx]?.kg ?? ""}
+                    onChange={(e) =>
+                      setPullupLog((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, kg: e.target.value } : p)),
+                      )
+                    }
+                  />
                 </div>
               ))}
             </div>
@@ -409,12 +440,23 @@ function WorkoutSession() {
                       </div>
                     ))}
                   </div>
-                  <div className="px-3 py-3 border-t border-border bg-card/20 grid grid-cols-[1fr_auto] items-center gap-3">
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                      Tiempo medio del bloque
-                    </span>
-                    <Input placeholder="ej. 38.6 s" className="h-8 w-28 text-xs" />
-                  </div>
+                   <div className="px-3 py-3 border-t border-border bg-card/20 grid grid-cols-[1fr_auto] items-center gap-3">
+                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                       Tiempo medio del bloque
+                     </span>
+                     <Input
+                       placeholder="ej. 38.6 s"
+                       className="h-8 w-28 text-xs"
+                       value={b.block === "A" ? runLog.a : runLog.b}
+                       onChange={(e) =>
+                         setRunLog((prev) =>
+                           b.block === "A"
+                             ? { ...prev, a: e.target.value }
+                             : { ...prev, b: e.target.value },
+                         )
+                       }
+                     />
+                   </div>
                 </div>
               ))}
             </div>
