@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-auth";
@@ -31,6 +31,7 @@ const DAYS = [
 
 function Perfil() {
   const { user } = useRequireAuth();
+  const navigate = useNavigate();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [days, setDays] = useState<string[]>(["L", "X", "V"]);
