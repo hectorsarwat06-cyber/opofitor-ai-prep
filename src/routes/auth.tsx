@@ -50,11 +50,10 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
-          options: { emailRedirectTo: `${window.location.origin}/onboarding` },
         });
         if (error) throw error;
         toast.success("Cuenta creada. ¡Bienvenido!");
-        navigate({ to: "/onboarding" });
+        navigate({ to: "/test-inicial" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: parsed.data.email,
