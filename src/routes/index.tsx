@@ -96,7 +96,7 @@ function Hero() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="hero" size="xl" className="group">
-                <Link to="/onboarding">
+                <Link to="/auth">
                   Empieza Gratis
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
                 </Link>
@@ -431,7 +431,7 @@ function CTA() {
             Sin tarjeta. Sin compromisos. Tu primer plan personalizado listo en 60 segundos.
           </p>
           <Button asChild variant="hero" size="xl" className="group">
-            <Link to="/onboarding">
+            <Link to="/auth">
               Generar Mi Plan
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition" />
             </Link>
