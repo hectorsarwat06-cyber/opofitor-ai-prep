@@ -96,9 +96,19 @@ function AuthPage() {
 
         <div className="glass rounded-2xl p-7 shadow-[var(--shadow-elegant)]">
           <Tabs value={tab} onValueChange={(v) => setTab(v as "login" | "signup")}>
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="login"><LogIn className="h-3.5 w-3.5 mr-1.5" /> Iniciar sesión</TabsTrigger>
-              <TabsTrigger value="signup"><UserPlus className="h-3.5 w-3.5 mr-1.5" /> Registrarse</TabsTrigger>
+            <TabsList className="grid grid-cols-2 w-full h-12 p-1 bg-secondary/60 rounded-xl">
+              <TabsTrigger
+                value="login"
+                className="h-10 rounded-lg text-sm font-semibold data-[state=active]:bg-[image:var(--gradient-primary)] data-[state=active]:text-primary-foreground data-[state=active]:shadow-[var(--shadow-glow)]"
+              >
+                <LogIn className="h-4 w-4 mr-1.5" /> Iniciar Sesión
+              </TabsTrigger>
+              <TabsTrigger
+                value="signup"
+                className="h-10 rounded-lg text-sm font-semibold data-[state=active]:bg-[image:var(--gradient-primary)] data-[state=active]:text-primary-foreground data-[state=active]:shadow-[var(--shadow-glow)]"
+              >
+                <UserPlus className="h-4 w-4 mr-1.5" /> Crear Cuenta
+              </TabsTrigger>
             </TabsList>
 
             <div className="mt-6">
@@ -152,9 +162,9 @@ function AuthPage() {
                 {loading ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Procesando…</>
                 ) : tab === "login" ? (
-                  <>Entrar <ArrowRight className="h-4 w-4" /></>
+                  <>Entrar a mi cuenta <ArrowRight className="h-4 w-4" /></>
                 ) : (
-                  <>Crear cuenta <ArrowRight className="h-4 w-4" /></>
+                  <>Registrarme <ArrowRight className="h-4 w-4" /></>
                 )}
               </Button>
             </form>
