@@ -6,7 +6,7 @@ import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, User, Scale, Ruler, CalendarDays, Save, Check, Loader2, LogOut } from "lucide-react";
+import { Shield, User, Scale, Ruler, CalendarDays, Save, Check, Loader2, LogOut, UserCircle2 } from "lucide-react";
 import { TopNav } from "@/components/landing/TopNav";
 
 export const Route = createFileRoute("/perfil")({
@@ -36,6 +36,7 @@ function Perfil() {
   const [height, setHeight] = useState("");
   const [days, setDays] = useState<string[]>(["L", "X", "V"]);
   const [examDate, setExamDate] = useState("");
+  const [genero, setGenero] = useState<"Hombre" | "Mujer" | "">("");
   const [saved, setSaved] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,7 +47,7 @@ function Perfil() {
       setLoadingData(true);
       const { data, error } = await supabase
         .from("profiles")
-        .select("peso, altura, dias_disponibles, fecha_examen")
+        .select("peso, altura, dias_disponibles, fecha_examen, genero")
         .eq("id", user.id)
         .maybeSingle();
       if (error) {
@@ -56,6 +57,7 @@ function Perfil() {
         setHeight(data.altura != null ? String(data.altura) : "");
         setDays(data.dias_disponibles ?? ["L", "X", "V"]);
         setExamDate(data.fecha_examen ?? "");
+        setGenero((data.genero as "Hombre" | "Mujer" | null) ?? "");
       }
       setLoadingData(false);
     })();
@@ -74,6 +76,7 @@ function Perfil() {
         altura: height ? Number(height) : null,
         dias_disponibles: days,
         fecha_examen: examDate || null,
+        genero: genero || null,
       });
       if (error) throw error;
       if (examDate) localStorage.setItem("opofitor_exam_date", examDate);
@@ -121,6 +124,33 @@ function Perfil() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-5">
+          {/* Género */}
+          <section className="glass rounded-2xl p-6 lg:col-span-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Identidad</p>
+            <h2 className="text-lg font-display font-bold mt-1 flex items-center gap-2">
+              <UserCircle2 className="h-4 w-4 text-primary" /> Género
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Diferencia los baremos del motor: dominadas (Hombre) o suspensión isométrica (Mujer).
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 max-w-md">
+              {(["Hombre", "Mujer"] as const).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGenero(g)}
+                  className={`h-12 rounded-xl border transition-all font-display font-bold ${
+                    genero === g
+                      ? "bg-[image:var(--gradient-primary)] border-primary text-primary-foreground shadow-[var(--shadow-glow)]"
+                      : "border-border bg-card/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </section>
+
           {/* Datos físicos */}
           <section className="glass rounded-2xl p-6">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Datos físicos</p>

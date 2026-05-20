@@ -7,9 +7,9 @@ import {
   PullupsCard,
   PaceCard,
   FatigueCard,
-  WeeklyPlanCard,
-  WEEK_PLAN,
 } from "@/components/landing/Mockups";
+import { useTrainingPlan } from "@/hooks/use-training-plan";
+import { sesionDeHoy } from "@/lib/training-engine";
 import {
   Shield,
   Sparkles,
@@ -44,8 +44,9 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   useRequireAuth();
-  const todayIdx = Math.min(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, WEEK_PLAN.length - 1);
-  const today = WEEK_PLAN[todayIdx];
+  const { plan, loading: planLoading } = useTrainingPlan();
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const sesionHoy = plan ? sesionDeHoy(plan) : null;
   const macro = useMacrocycle();
   return (
     <div className="min-h-screen bg-background text-foreground relative">
@@ -124,20 +125,43 @@ function Dashboard() {
           <div className="lg:col-span-2 glass rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-40" style={{ background: "var(--gradient-glow)" }} />
             <div className="relative">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">{today.label} · Entreno de hoy</p>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">{today.title}</h2>
-              <p className="text-sm text-muted-foreground mt-2">{today.detail}</p>
-              <div className="mt-5 grid grid-cols-3 gap-4">
-                <Stat icon={Timer} label="Duración" value="55 min" />
-                <Stat icon={Zap} label="Carga" value={today.tag} />
-                <Stat icon={Heart} label="FC objetivo" value="170-180 bpm" />
-              </div>
-              <div className="mt-6 flex gap-2">
-                <Button asChild variant="hero">
-                  <Link to="/workout-session"><Play className="h-4 w-4" /> Empezar ahora</Link>
-                </Button>
-                <Button variant="outline">Ver protocolo</Button>
-              </div>
+              {planLoading || !sesionHoy ? (
+                <p className="text-sm text-muted-foreground">Cargando tu sesión personalizada…</p>
+              ) : sesionHoy.tipo === "Descanso" ? (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">{sesionHoy.diaNombre} · Día de descanso</p>
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">Recuperación total</h2>
+                  <p className="text-sm text-muted-foreground mt-2">{sesionHoy.resumen}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">{sesionHoy.diaNombre} · Entreno de hoy</p>
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mt-2">{sesionHoy.titulo}</h2>
+                  <p className="text-sm text-muted-foreground mt-2">{sesionHoy.resumen}</p>
+                  <div className="mt-5 grid grid-cols-3 gap-4">
+                    <Stat icon={Timer} label="Duración" value={`${sesionHoy.duracionMin} min`} />
+                    <Stat icon={Zap} label="Tipo" value={sesionHoy.tag} />
+                    <Stat icon={Heart} label="VAM" value={`${plan?.vam.toFixed(1) ?? "—"} km/h`} />
+                  </div>
+                  <ul className="mt-5 space-y-2">
+                    {sesionHoy.bloques.map((b, i) => (
+                      <li key={i} className="rounded-lg border border-border bg-card/40 p-3">
+                        <p className="text-sm font-semibold">{b.ejercicio}</p>
+                        <p className="text-xs text-primary font-mono mt-1">{b.detalle}</p>
+                        {b.observacion && <p className="text-[11px] text-muted-foreground mt-1">{b.observacion}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-6 flex gap-2">
+                    <Button asChild variant="hero">
+                      <Link to="/workout-session"><Play className="h-4 w-4" /> Empezar ahora</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                      <Link to="/plan-semanal">Ver semana</Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="glass rounded-2xl p-6 flex flex-col justify-between">
@@ -168,7 +192,22 @@ function Dashboard() {
         <section>
           <SectionTitle icon={CalendarPlus} title="Calendario semanal" subtitle="Tu mesociclo de carga" />
           <div className="mt-5">
-            <WeeklyPlanCard activeIndex={todayIdx} />
+            {plan ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                {plan.sesiones.map((s, i) => (
+                  <div
+                    key={s.dia}
+                    className={`rounded-xl border p-3 text-xs ${
+                      i === todayIdx ? "border-primary/60 bg-primary/10" : "border-border bg-card/40"
+                    }`}
+                  >
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{s.diaNombre.slice(0,3)}</p>
+                    <p className="text-sm font-display font-bold mt-1 leading-tight">{s.titulo.split("–")[0].trim()}</p>
+                    <p className="text-[10px] text-primary mt-1">{s.tag}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
 
