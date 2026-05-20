@@ -141,7 +141,7 @@ function Dashboard() {
                   <div className="mt-5 grid grid-cols-3 gap-4">
                     <Stat icon={Timer} label="Duración" value={`${sesionHoy.duracionMin} min`} />
                     <Stat icon={Zap} label="Tipo" value={sesionHoy.tag} />
-                    <Stat icon={Heart} label="VAM" value={`${plan.vam.toFixed(1)} km/h`} />
+                    <Stat icon={Heart} label="VAM" value={`${plan?.vam.toFixed(1) ?? "—"} km/h`} />
                   </div>
                   <ul className="mt-5 space-y-2">
                     {sesionHoy.bloques.map((b, i) => (
