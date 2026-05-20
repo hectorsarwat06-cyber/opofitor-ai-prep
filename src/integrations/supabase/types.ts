@@ -54,27 +54,33 @@ export type Database = {
         Row: {
           created_at: string
           fecha_test: string
+          fuerza_tren_superior: number | null
           id: string
           max_dominadas: number
           tiempo_1000m: string
+          tiempo_agilidad: number | null
           user_id: string
           vam_estimada: number | null
         }
         Insert: {
           created_at?: string
           fecha_test?: string
+          fuerza_tren_superior?: number | null
           id?: string
           max_dominadas: number
           tiempo_1000m: string
+          tiempo_agilidad?: number | null
           user_id: string
           vam_estimada?: number | null
         }
         Update: {
           created_at?: string
           fecha_test?: string
+          fuerza_tren_superior?: number | null
           id?: string
           max_dominadas?: number
           tiempo_1000m?: string
+          tiempo_agilidad?: number | null
           user_id?: string
           vam_estimada?: number | null
         }
@@ -86,6 +92,7 @@ export type Database = {
           created_at: string
           dias_disponibles: string[] | null
           fecha_examen: string | null
+          genero: string | null
           id: string
           peso: number | null
           updated_at: string
@@ -95,6 +102,7 @@ export type Database = {
           created_at?: string
           dias_disponibles?: string[] | null
           fecha_examen?: string | null
+          genero?: string | null
           id: string
           peso?: number | null
           updated_at?: string
@@ -104,6 +112,7 @@ export type Database = {
           created_at?: string
           dias_disponibles?: string[] | null
           fecha_examen?: string | null
+          genero?: string | null
           id?: string
           peso?: number | null
           updated_at?: string
