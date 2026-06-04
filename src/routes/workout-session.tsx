@@ -3,10 +3,10 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-auth";
+import { useTrainingPlan } from "@/hooks/use-training-plan";
+import { sesionDeHoy } from "@/lib/training-engine";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -17,34 +17,17 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   Shield,
   ArrowLeft,
-  Flame,
-  Dumbbell,
-  Timer,
-  Snowflake,
   CheckCircle2,
   Activity,
-  HeartPulse,
-  Gauge,
-  Repeat,
-  Wind,
-  ChevronRight,
+  Timer,
   Loader2,
+  ChevronRight,
+  Dumbbell,
+  Wind,
+  Snowflake,
+  Flame,
 } from "lucide-react";
 
 export const Route = createFileRoute("/workout-session")({
@@ -53,110 +36,68 @@ export const Route = createFileRoute("/workout-session")({
       { title: "Sesión de entrenamiento — opoFITor" },
       {
         name: "description",
-        content:
-          "Sesión científica diaria: protocolo RAMP, fuerza específica en dominadas y potencia aeróbica VAM.",
+        content: "Sesión diaria generada por el motor de periodización personalizado.",
       },
     ],
   }),
   component: WorkoutSession,
 });
 
+function tipoIcon(tipo: string) {
+  if (tipo === "Fuerza") return Dumbbell;
+  if (tipo === "Resistencia") return Wind;
+  if (tipo === "Agilidad") return Flame;
+  return Snowflake;
+}
+
 function WorkoutSession() {
   useRequireAuth();
-  const today = new Date().toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
   const navigate = useNavigate();
+  const { plan, loading } = useTrainingPlan();
+  const sesion = useMemo(() => (plan ? sesionDeHoy(plan) : null), [plan]);
+
   const [sessionRPE, setSessionRPE] = useState<number[]>([7]);
   const [rpeOpen, setRpeOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const [saving, setSaving] = useState(false);
-  // Registro real por serie de dominadas: reps logradas + peso (kg)
-  const [pullupLog, setPullupLog] = useState<{ reps: string; kg: string }[]>(
-    Array.from({ length: 4 }, () => ({ reps: "", kg: "" })),
+
+  const totalSrpe = useMemo(
+    () => sessionRPE[0] * (sesion?.duracionMin ?? 0),
+    [sessionRPE, sesion],
   );
-  // Tiempos reales por bloque de carrera
-  const [runLog, setRunLog] = useState<{ a: string; b: string }>({ a: "", b: "" });
 
   const handleFinish = async () => {
+    if (!sesion) return;
     setSaving(true);
-    const rpe = sessionRPE[0];
-    const repsLog = pullupLog
-      .map((s, i) => {
-        const reps = s.reps.trim() || "—";
-        const kg = s.kg.trim() ? `${s.kg} kg` : "PC";
-        return `S${i + 1}: ${reps} reps @ ${kg}`;
-      })
-      .join(" · ");
-    const tiempoSeries = `Bloque A: ${runLog.a || "—"} · Bloque B: ${runLog.b || "—"}`;
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
-        toast.error("Sesión expirada. Inicia sesión.");
+        toast.error("Sesión expirada. Inicia sesión de nuevo.");
         navigate({ to: "/auth" });
         return;
       }
-      const { error: insErr } = await supabase.from("entrenamientos_log").insert({
+      const { error } = await supabase.from("entrenamientos_log").insert({
         user_id: u.user.id,
-        tipo_sesion: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
-        rpe_sesion: rpe,
-        repeticiones_dominadas: repsLog,
-        tiempo_medio_series: tiempoSeries,
+        tipo_sesion: `${sesion.diaNombre} · ${sesion.titulo}`,
+        rpe_sesion: sessionRPE[0],
       });
-      if (insErr) throw insErr;
-
-      const raw = localStorage.getItem("opofitor_history");
-      const hist = raw ? JSON.parse(raw) : [];
-      hist.unshift({
-        date: new Date().toISOString(),
-        rpe,
-        title: "Día 1 · Fuerza Máxima + Potencia Aeróbica",
-        achievement: `Dominadas 4×3-4 RIR 2 · 2×(6×200m) sRPE ${rpe}`,
-      });
-      localStorage.setItem("opofitor_history", JSON.stringify(hist.slice(0, 30)));
+      if (error) throw error;
       toast.success("Sesión guardada correctamente");
       setFinished(true);
       setRpeOpen(false);
       setTimeout(() => navigate({ to: "/plan-semanal" }), 700);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "No se pudo guardar la sesión";
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : "No se pudo guardar la sesión");
     } finally {
       setSaving(false);
     }
   };
 
-  const pullupSets = [
-    { set: 1, reps: "4", load: "+12 kg", pct: "80% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:00" },
-    { set: 2, reps: "4", load: "+13 kg", pct: "82% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "3:30" },
-    { set: 3, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
-    { set: 4, reps: "3", load: "+15 kg", pct: "85% RM", rir: "RIR 2", tempo: "Bajada control · subida explosiva", rest: "4:00" },
-  ];
-
-  const runBlocks = [
-    {
-      block: "A",
-      reps: Array.from({ length: 6 }, (_, i) => ({
-        i: i + 1,
-        target: "39.0 s",
-        pace: i % 2 === 0 ? "110% VAM" : "112% VAM",
-        rest: "40 s pasivo",
-      })),
-    },
-    {
-      block: "B",
-      reps: Array.from({ length: 6 }, (_, i) => ({
-        i: i + 1,
-        target: i < 3 ? "38.5 s" : "38.0 s",
-        pace: "115% VAM",
-        rest: "40 s pasivo",
-      })),
-    },
-  ];
-
-  const totalSrpe = useMemo(() => sessionRPE[0] * 65, [sessionRPE]);
+  const today = new Date().toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
@@ -174,358 +115,45 @@ function WorkoutSession() {
             opo<span className="text-primary">FIT</span>or
           </span>
         </Link>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/plan-semanal">Plan semanal</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-          </Button>
-        </div>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/dashboard">
+            <ArrowLeft className="h-4 w-4" /> Dashboard
+          </Link>
+        </Button>
       </header>
 
       <main className="px-4 pb-32 max-w-4xl mx-auto animate-fade-up space-y-6">
-        {/* Header / Protocol summary */}
-        <section className="glass rounded-2xl p-6 relative overflow-hidden">
-          <div
-            className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-40"
-            style={{ background: "var(--gradient-glow)" }}
-          />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              <span className="capitalize">{today}</span>
-              <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
-              <span>Sesión 14 / 35</span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold mt-1 tracking-tight">
-              Día 1 · Fuerza Máxima + Potencia Aeróbica
-            </h1>
-            <p className="text-sm text-primary mt-1">
-              Mesociclo de Acumulación · Microciclo 3 / 5
+        {loading ? (
+          <div className="glass rounded-2xl p-10 text-center">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+            <p className="text-sm text-muted-foreground mt-3">
+              Cargando tu sesión personalizada…
             </p>
-
-            <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Metric icon={HeartPulse} label="Readiness" value="86" suffix="/100" />
-              <Metric icon={Gauge} label="Carga prevista" value="455" suffix="UA" />
-              <Metric icon={Timer} label="Duración" value="68" suffix="min" />
-              <Metric icon={Activity} label="VAM ref." value="18.0" suffix="km/h" />
-            </div>
-
-            <div className="mt-5">
-              <Progress value={86} className="h-2" />
-              <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-                <span>HRV +6% vs. baseline</span>
-                <span>Listo para alta intensidad neural</span>
-              </div>
-            </div>
           </div>
-        </section>
-
-        {/* Session structure */}
-        <Accordion
-          type="multiple"
-          defaultValue={["ramp", "blockA", "blockB", "cooldown"]}
-          className="space-y-3"
-        >
-          {/* RAMP */}
-          <Block
-            id="ramp"
-            tag="Fase 1"
-            tagColor="bg-amber-500/15 text-amber-400 border-amber-500/30"
-            icon={Flame}
-            title="Calentamiento — Protocolo RAMP"
-            subtitle="15 min · preparación neuromuscular y metabólica"
-          >
-            <div className="space-y-3">
-              <Phase
-                step="R"
-                name="Raise — Elevación"
-                duration="5 min"
-                detail="Trote suave continuo a 60–65% FCmáx. Aumento progresivo de la temperatura central (+1.0 °C) y cinética de O₂ para acelerar la fase rápida del VO₂."
-                meta={[
-                  { k: "Zona", v: "Z1" },
-                  { k: "FC", v: "115–135 bpm" },
-                  { k: "RPE", v: "3/10" },
-                ]}
-              />
-              <Phase
-                step="A·M"
-                name="Activate & Mobilize"
-                duration="6 min"
-                detail="Movilidad articular dirigida: rotación torácica, retracción/depresión escapular, CARs glenohumerales (dominadas) y movilidad coxofemoral en extensión + flexión de cadera (carrera)."
-                meta={[
-                  { k: "Bloques", v: "3 × 90 s" },
-                  { k: "Foco", v: "Escápula · Cadera" },
-                  { k: "Tipo", v: "Dinámico" },
-                ]}
-              />
-              <Phase
-                step="P"
-                name="Potentiate — Activación PAP"
-                duration="4 min"
-                detail="Sprints progresivos 3 × 20 m (85→95% velocidad máx) + 2 × 3 dominadas explosivas (intención balística). Potenciación post-activación del SNC sin generar fatiga periférica."
-                meta={[
-                  { k: "Sprints", v: "3 × 20 m" },
-                  { k: "Dominadas", v: "2 × 3 explosivas" },
-                  { k: "Descanso", v: "60 s" },
-                ]}
-              />
-            </div>
-          </Block>
-
-          {/* Block A */}
-          <Block
-            id="blockA"
-            tag="Bloque A"
-            tagColor="bg-primary/15 text-primary border-primary/30"
-            icon={Dumbbell}
-            title="Fuerza Específica — Dominadas Pronas Lastradas"
-            subtitle="Velocidad / RIR · 4 series · ATP-PCr"
-          >
-            <ProtocolBar
-              items={[
-                { k: "Metodología", v: "Entrenamiento por RIR" },
-                { k: "Sistema", v: "ATP-PCr" },
-                { k: "Intención", v: "Máxima velocidad concéntrica" },
-                { k: "Tempo", v: "2 : 0 : X : 1" },
-              ]}
-            />
-
-            <div className="mt-4 rounded-xl border border-border bg-card/40 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-border">
-                    <TableHead className="w-10 text-[10px] uppercase tracking-widest">
-                      Set
-                    </TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest">Reps</TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest">Carga</TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest">% RM</TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest">RIR</TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest">Tempo</TableHead>
-                    <TableHead className="text-[10px] uppercase tracking-widest text-right">
-                      Descanso
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pullupSets.map((s) => (
-                    <TableRow key={s.set} className="border-border">
-                      <TableCell className="font-display font-bold text-primary">
-                        {s.set}
-                      </TableCell>
-                      <TableCell className="font-medium">{s.reps}</TableCell>
-                      <TableCell>{s.load}</TableCell>
-                      <TableCell className="text-muted-foreground">{s.pct}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px] py-0 h-5 border-primary/30 text-primary">
-                          {s.rir}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{s.tempo}</TableCell>
-                      <TableCell className="text-right font-mono text-xs">{s.rest}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="mt-4 grid md:grid-cols-2 gap-3">
-              <NoteCard
-                icon={Repeat}
-                title="Tempo Biomecánico 2:0:X:1"
-                body="2 s fase excéntrica controlada · 0 s pausa abajo · X concéntrica explosiva (intención máxima) · 1 s pausa isométrica con barbilla sobre la barra."
-              />
-              <NoteCard
-                icon={Timer}
-                title="Recuperación 3–4 min estrictos"
-                body="Garantiza resíntesis completa de fosfocreatina (>95% PCr a 3:30) para mantener producción de fuerza pico en cada serie."
-              />
-            </div>
-
-            <p className="text-[11px] text-muted-foreground mt-4 mb-2 uppercase tracking-widest">
-              Registro de ejecución
-            </p>
-            <div className="space-y-2">
-              {pullupSets.map((s, idx) => (
-                <div
-                  key={s.set}
-                  className="grid grid-cols-[36px_1fr_1fr] gap-2 items-center rounded-lg border border-border bg-card/40 p-2.5"
-                >
-                  <span className="font-display font-bold text-primary text-sm pl-2">
-                    #{s.set}
-                  </span>
-                  <Input
-                    inputMode="numeric"
-                    placeholder="Repeticiones logradas"
-                    className="h-9 text-sm"
-                    value={pullupLog[idx]?.reps ?? ""}
-                    onChange={(e) =>
-                      setPullupLog((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, reps: e.target.value } : p)),
-                      )
-                    }
-                  />
-                  <Input
-                    inputMode="decimal"
-                    placeholder="Peso utilizado (kg)"
-                    className="h-9 text-sm"
-                    value={pullupLog[idx]?.kg ?? ""}
-                    onChange={(e) =>
-                      setPullupLog((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, kg: e.target.value } : p)),
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </Block>
-
-          {/* Block B */}
-          <Block
-            id="blockB"
-            tag="Bloque B"
-            tagColor="bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-            icon={Wind}
-            title="Potencia Aeróbica — HIIT Corto VAM"
-            subtitle="2 × (6 × 200m) · VO₂máx · tolerancia láctica"
-          >
-            <ProtocolBar
-              items={[
-                { k: "Metodología", v: "HIIT corto intermitente" },
-                { k: "Intensidad", v: "110–115% VAM" },
-                { k: "Ratio W:R", v: "1:1 pasivo" },
-                { k: "Recup. inter-bloque", v: "3 min activo" },
-              ]}
-            />
-
-            <div className="mt-4 grid md:grid-cols-2 gap-3">
-              {runBlocks.map((b) => (
-                <div
-                  key={b.block}
-                  className="rounded-xl border border-border bg-card/40 overflow-hidden"
-                >
-                  <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-                    <span className="text-xs font-display font-bold tracking-wider">
-                      Bloque {b.block} · 6 × 200 m
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] h-5 border-cyan-500/30 text-cyan-400"
-                    >
-                      {b.block === "A" ? "110–112% VAM" : "115% VAM"}
-                    </Badge>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {b.reps.map((r) => (
-                      <div
-                        key={r.i}
-                        className="grid grid-cols-[28px_1fr_1fr] items-center gap-3 px-3 py-2.5"
-                      >
-                        <span className="text-xs font-display font-bold text-cyan-400">
-                          {r.i}
-                        </span>
-                        <div>
-                          <p className="text-sm font-display font-bold leading-none">
-                            {r.target}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            {r.pace} · {r.rest}
-                          </p>
-                        </div>
-                        <Input placeholder="Real" className="h-8 text-xs" />
-                      </div>
-                    ))}
-                  </div>
-                   <div className="px-3 py-3 border-t border-border bg-card/20 grid grid-cols-[1fr_auto] items-center gap-3">
-                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                       Tiempo medio del bloque
-                     </span>
-                     <Input
-                       placeholder="ej. 38.6 s"
-                       className="h-8 w-28 text-xs"
-                       value={b.block === "A" ? runLog.a : runLog.b}
-                       onChange={(e) =>
-                         setRunLog((prev) =>
-                           b.block === "A"
-                             ? { ...prev, a: e.target.value }
-                             : { ...prev, b: e.target.value },
-                         )
-                       }
-                     />
-                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 grid md:grid-cols-3 gap-3 text-xs">
-              <MicroStat label="Volumen total" value="2 400 m" />
-              <MicroStat label="Tiempo en zona VO₂" value="~7 min" />
-              <MicroStat label="Lactato esperado" value="8–11 mmol/L" />
-            </div>
-          </Block>
-
-          {/* Cool-down */}
-          <Block
-            id="cooldown"
-            tag="Fase 4"
-            tagColor="bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-            icon={Snowflake}
-            title="Vuelta a la Calma"
-            subtitle="10 min · aclaramiento de lactato y movilidad pasiva"
-          >
-            <div className="space-y-3">
-              <Phase
-                step="1"
-                name="Trote regenerativo"
-                duration="5 min"
-                detail="Carrera continua en zona 1 (50–60% FCmáx) para favorecer el aclaramiento de lactato sanguíneo mediante oxidación muscular y reducir la frecuencia cardíaca progresivamente."
-                meta={[
-                  { k: "Zona", v: "Z1" },
-                  { k: "FC", v: "100–120 bpm" },
-                  { k: "Lactato", v: "↓ 50% en 8 min" },
-                ]}
-              />
-              <Phase
-                step="2"
-                name="Estiramientos estáticos pasivos"
-                duration="5 min"
-                detail="Énfasis en dorsal ancho, redondo mayor y cadena posterior (isquiosurales, glúteo, gemelo). Series de 30–45 s por grupo, intensidad submáxima sin dolor."
-                meta={[
-                  { k: "Series", v: "2 × 30–45 s" },
-                  { k: "Foco", v: "Dorsal · C. posterior" },
-                  { k: "Modo", v: "Pasivo" },
-                ]}
-              />
-            </div>
-          </Block>
-        </Accordion>
-
-        {/* Footer actions */}
-        <section className="glass rounded-2xl p-6 space-y-3 text-center">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            ¿Has terminado?
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Registraremos tu esfuerzo percibido (RPE) para ajustar la carga semanal.
-          </p>
-          <Button
-            variant="hero"
-            size="xl"
-            className="w-full"
-            onClick={() => setRpeOpen(true)}
-            disabled={finished}
-          >
-            <CheckCircle2 className="h-5 w-5" />
-            {finished ? "¡Sesión guardada!" : "Finalizar Sesión"}
-          </Button>
-        </section>
+        ) : !sesion || sesion.tipo === "Descanso" ? (
+          <EmptyState
+            title={
+              sesion?.tipo === "Descanso"
+                ? "Hoy toca descanso"
+                : "No hay sesión activa para hoy o no se ha podido cargar"
+            }
+            description={
+              sesion?.tipo === "Descanso"
+                ? sesion.resumen
+                : "Vuelve al panel para revisar tu plan o repetir el test inicial."
+            }
+          />
+        ) : (
+          <ActiveSession
+            sesion={sesion}
+            today={today}
+            vam={plan?.vam ?? 0}
+            finished={finished}
+            onOpenRpe={() => setRpeOpen(true)}
+          />
+        )}
       </main>
 
-      {/* RPE Dialog */}
       <Dialog open={rpeOpen} onOpenChange={setRpeOpen}>
         <DialogContent className="glass border-border max-w-md">
           <DialogHeader>
@@ -543,9 +171,7 @@ function WorkoutSession() {
                 {sessionRPE[0]}
               </p>
               <p className="text-xs text-muted-foreground mt-1">/ 10</p>
-              <p className="text-sm mt-2 text-foreground/80">
-                {rpeLabel(sessionRPE[0])}
-              </p>
+              <p className="text-sm mt-2 text-foreground/80">{rpeLabel(sessionRPE[0])}</p>
             </div>
 
             <Slider
@@ -565,25 +191,23 @@ function WorkoutSession() {
                 <Activity className="h-3.5 w-3.5 text-primary" />
                 Carga sRPE estimada
               </span>
-              <span className="font-display font-bold text-foreground">
-                {totalSrpe} UA
-              </span>
+              <span className="font-display font-bold text-foreground">{totalSrpe} UA</span>
             </div>
           </div>
 
           <DialogFooter className="flex-row gap-2 sm:justify-stretch">
-            <Button
-              variant="ghost"
-              className="flex-1"
-              onClick={() => setRpeOpen(false)}
-            >
+            <Button variant="ghost" className="flex-1" onClick={() => setRpeOpen(false)}>
               Cancelar
             </Button>
             <Button variant="hero" className="flex-1" onClick={handleFinish} disabled={saving}>
               {saving ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Guardando…</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Guardando…
+                </>
               ) : (
-                <><ChevronRight className="h-4 w-4" /> Guardar sesión</>
+                <>
+                  <ChevronRight className="h-4 w-4" /> Guardar sesión
+                </>
               )}
             </Button>
           </DialogFooter>
@@ -593,12 +217,112 @@ function WorkoutSession() {
   );
 }
 
-function rpeLabel(v: number) {
-  if (v <= 2) return "Muy ligero · recuperación";
-  if (v <= 4) return "Ligero · cómodo";
-  if (v <= 6) return "Moderado · sostenible";
-  if (v <= 8) return "Duro · cerca del límite";
-  return "Máximo · al fallo";
+function ActiveSession({
+  sesion,
+  today,
+  vam,
+  finished,
+  onOpenRpe,
+}: {
+  sesion: ReturnType<typeof sesionDeHoy>;
+  today: string;
+  vam: number;
+  finished: boolean;
+  onOpenRpe: () => void;
+}) {
+  const Icon = tipoIcon(sesion.tipo);
+  return (
+    <>
+      <section className="glass rounded-2xl p-6 relative overflow-hidden">
+        <div
+          className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-40"
+          style={{ background: "var(--gradient-glow)" }}
+        />
+        <div className="relative">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="capitalize">{today}</span>
+            <span className="h-1 w-1 rounded-full bg-muted-foreground/60" />
+            <span>{sesion.diaNombre}</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-display font-bold mt-1 tracking-tight">
+            {sesion.titulo}
+          </h1>
+          <p className="text-sm text-primary mt-1">{sesion.resumen}</p>
+
+          <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Metric icon={Icon} label="Tipo" value={sesion.tag} />
+            <Metric icon={Timer} label="Duración" value={`${sesion.duracionMin}`} suffix="min" />
+            <Metric icon={Activity} label="Bloques" value={`${sesion.bloques.length}`} />
+            <Metric icon={Wind} label="VAM" value={vam ? vam.toFixed(1) : "—"} suffix="km/h" />
+          </div>
+
+          {sesion.ajusteRPE && (
+            <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/90">
+              {sesion.ajusteRPE}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        {sesion.bloques.map((b, i) => (
+          <div key={i} className="glass rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/15 grid place-items-center shrink-0">
+                <span className="text-xs font-display font-bold text-primary">{i + 1}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-base font-display font-bold">{b.ejercicio}</p>
+                  <Badge variant="outline" className="text-[10px] h-5 border-primary/30 text-primary">
+                    Prescripción
+                  </Badge>
+                </div>
+                <p className="text-sm text-primary font-mono mt-1.5">{b.detalle}</p>
+                {b.observacion && (
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    {b.observacion}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="glass rounded-2xl p-6 space-y-3 text-center">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">¿Has terminado?</p>
+        <p className="text-sm text-muted-foreground">
+          Registraremos tu esfuerzo percibido (RPE) para ajustar la carga semanal.
+        </p>
+        <Button
+          variant="hero"
+          size="xl"
+          className="w-full"
+          onClick={onOpenRpe}
+          disabled={finished}
+        >
+          <CheckCircle2 className="h-5 w-5" />
+          {finished ? "¡Sesión guardada!" : "Finalizar sesión"}
+        </Button>
+      </section>
+    </>
+  );
+}
+
+function EmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <section className="glass rounded-2xl p-10 text-center space-y-4">
+      <Snowflake className="h-10 w-10 mx-auto text-primary" />
+      <h2 className="text-xl font-display font-bold">{title}</h2>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto">{description}</p>
+      <Button asChild variant="hero">
+        <Link to="/dashboard">
+          <ArrowLeft className="h-4 w-4" /> Volver al dashboard
+        </Link>
+      </Button>
+    </section>
+  );
 }
 
 function Metric({
@@ -620,152 +344,16 @@ function Metric({
       </div>
       <p className="font-display font-bold mt-1">
         <span className="text-xl">{value}</span>
-        {suffix && (
-          <span className="text-xs text-muted-foreground ml-1">{suffix}</span>
-        )}
+        {suffix && <span className="text-xs text-muted-foreground ml-1">{suffix}</span>}
       </p>
     </div>
   );
 }
 
-function Block({
-  id,
-  icon: Icon,
-  title,
-  subtitle,
-  tag,
-  tagColor,
-  children,
-}: {
-  id: string;
-  icon: any;
-  title: string;
-  subtitle: string;
-  tag: string;
-  tagColor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <AccordionItem
-      value={id}
-      className="glass rounded-2xl border-0 px-4 data-[state=open]:bg-white/[0.04] transition-colors"
-    >
-      <AccordionTrigger className="hover:no-underline py-4">
-        <div className="flex items-center gap-3 text-left flex-1">
-          <div className="h-10 w-10 rounded-lg bg-primary/15 grid place-items-center shrink-0">
-            <Icon className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border ${tagColor}`}
-              >
-                {tag}
-              </span>
-            </div>
-            <p className="text-sm font-display font-bold mt-1 truncate">{title}</p>
-            <p className="text-[11px] text-muted-foreground font-normal">
-              {subtitle}
-            </p>
-          </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="pb-5">{children}</AccordionContent>
-    </AccordionItem>
-  );
-}
-
-function Phase({
-  step,
-  name,
-  duration,
-  detail,
-  meta,
-}: {
-  step: string;
-  name: string;
-  duration: string;
-  detail: string;
-  meta: { k: string; v: string }[];
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card/40 p-4">
-      <div className="flex items-start gap-3">
-        <div className="h-9 min-w-[2.25rem] px-2 rounded-lg bg-primary/15 grid place-items-center shrink-0">
-          <span className="text-xs font-display font-bold text-primary">
-            {step}
-          </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-display font-bold">{name}</p>
-            <span className="text-[11px] font-mono text-muted-foreground">
-              {duration}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-            {detail}
-          </p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
-            {meta.map((m) => (
-              <div key={m.k} className="text-[10px]">
-                <span className="uppercase tracking-widest text-muted-foreground">
-                  {m.k}
-                </span>{" "}
-                <span className="font-medium text-foreground">{m.v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProtocolBar({ items }: { items: { k: string; v: string }[] }) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-xl border border-border bg-card/40 p-3">
-      {items.map((m) => (
-        <div key={m.k}>
-          <p className="text-[9px] uppercase tracking-widest text-muted-foreground">
-            {m.k}
-          </p>
-          <p className="text-xs font-display font-bold mt-0.5">{m.v}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function NoteCard({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: any;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card/40 p-4">
-      <div className="flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-primary" />
-        <p className="text-xs font-display font-bold">{title}</p>
-      </div>
-      <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5">
-        {body}
-      </p>
-    </div>
-  );
-}
-
-function MicroStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card/40 px-3 py-2">
-      <p className="text-[9px] uppercase tracking-widest text-muted-foreground">
-        {label}
-      </p>
-      <p className="text-sm font-display font-bold mt-0.5">{value}</p>
-    </div>
-  );
+function rpeLabel(v: number) {
+  if (v <= 2) return "Muy ligero · recuperación";
+  if (v <= 4) return "Ligero · cómodo";
+  if (v <= 6) return "Moderado · sostenible";
+  if (v <= 8) return "Duro · cerca del límite";
+  return "Máximo · al fallo";
 }
