@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useTrainingPlan } from "@/hooks/use-training-plan";
@@ -29,7 +29,11 @@ function iconoSesion(tipo: TipoSesion) {
 
 function PlanSemanal() {
   useRequireAuth();
-  const { plan, loading, evaluacion } = useTrainingPlan();
+  const { plan, loading, evaluacion, needsInitialTest } = useTrainingPlan();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (needsInitialTest) navigate({ to: "/test-inicial" });
+  }, [needsInitialTest, navigate]);
   const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
   if (loading) {

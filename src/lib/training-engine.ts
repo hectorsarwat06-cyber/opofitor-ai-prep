@@ -347,7 +347,7 @@ export function construirPlanSemanal(args: {
   logsSemanaAnterior: LogEntrenamiento[];
   semana: number;
 }): PlanSemanal {
-  const ajuste = analizarRPE(args.logsSemanaAnterior);
+  const ajuste = analizarRPE(args.logsSemanaAnterior ?? []);
   const diasActivos = normalizarDias(args.perfil);
   const rot = rotacionSesiones(Math.max(diasActivos.length, 1));
   const sesiones: SesionPrescrita[] = DIAS_ORDEN.map((dia) => {
