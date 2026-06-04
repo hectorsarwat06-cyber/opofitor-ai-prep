@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useTrainingPlan } from "@/hooks/use-training-plan";
