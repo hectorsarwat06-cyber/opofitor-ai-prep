@@ -18,6 +18,7 @@ interface UseTrainingPlanResult {
   evaluacion: EvaluacionInicial | null;
   plan: PlanSemanal | null;
   semana: number;
+  needsInitialTest: boolean;
 }
 
 function calcularSemana(): number {
@@ -121,13 +122,34 @@ export function useTrainingPlan(): UseTrainingPlanResult {
 
   const plan = useMemo<PlanSemanal | null>(() => {
     if (!perfil || !evaluacion) return null;
-    return construirPlanSemanal({
-      perfil,
-      evaluacion,
-      logsSemanaAnterior: logs,
-      semana,
-    });
+    try {
+      return construirPlanSemanal({
+        perfil,
+        evaluacion,
+        logsSemanaAnterior: logs,
+        semana,
+      });
+    } catch (e) {
+      console.error("[training-engine] error generando plan", e);
+      return null;
+    }
   }, [perfil, evaluacion, logs, semana]);
 
-  return { loading: loading || authLoading, error, perfil, evaluacion, plan, semana };
+  const needsInitialTest =
+    !loading && !authLoading && !!user && (
+      !evaluacion ||
+      !evaluacion.tiempo_1000m ||
+      evaluacion.fuerza_tren_superior == null ||
+      !perfil?.genero
+    );
+
+  return {
+    loading: loading || authLoading,
+    error,
+    perfil,
+    evaluacion,
+    plan,
+    semana,
+    needsInitialTest,
+  };
 }
