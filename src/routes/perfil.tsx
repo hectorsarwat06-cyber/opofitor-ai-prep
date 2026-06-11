@@ -114,6 +114,9 @@ function Perfil() {
     if (!user) return;
     setDeleting(true);
     try {
+      await supabase.from("entrenamientos_log").delete().eq("user_id", user.id);
+      await supabase.from("evaluaciones").delete().eq("user_id", user.id);
+      await supabase.from("app_feedback").delete().eq("user_id", user.id);
       const { error } = await supabase.from("profiles").delete().eq("id", user.id);
       if (error) throw error;
       await supabase.auth.signOut();
