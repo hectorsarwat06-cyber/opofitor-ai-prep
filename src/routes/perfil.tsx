@@ -8,6 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, User, Scale, Ruler, CalendarDays, Save, Check, Loader2, LogOut, UserCircle2 } from "lucide-react";
 import { TopNav } from "@/components/landing/TopNav";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -40,6 +52,7 @@ function Perfil() {
   const [saved, setSaved] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -95,6 +108,23 @@ function Perfil() {
     await supabase.auth.signOut();
     toast.success("Sesión cerrada");
     navigate({ to: "/" });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", user.id);
+      if (error) throw error;
+      await supabase.auth.signOut();
+      try { localStorage.removeItem("opofitor_exam_date"); } catch {}
+      toast.success("Tu cuenta y tus datos han sido eliminados");
+      navigate({ to: "/" });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo eliminar la cuenta";
+      toast.error(msg);
+      setDeleting(false);
+    }
   };
 
   return (
@@ -226,6 +256,43 @@ function Perfil() {
           </Button>
           {saved && <span className="text-sm text-primary flex items-center gap-1.5"><Check className="h-4 w-4" /> Guardado</span>}
         </div>
+
+        <section className="mt-16 border-t border-destructive/30 pt-8">
+          <p className="text-[10px] uppercase tracking-widest text-destructive/80">Zona de peligro</p>
+          <h2 className="text-lg font-display font-bold mt-1">Eliminar cuenta</h2>
+          <p className="text-xs text-muted-foreground mt-1 max-w-xl">
+            Borraremos tu perfil, evaluaciones y registros de entrenamiento. Esta acción es{" "}
+            <span className="text-destructive font-semibold">irreversible</span> y cumple con tu derecho de
+            supresión (RGPD).
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="lg" className="mt-4" disabled={deleting}>
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Eliminar mi cuenta y mis datos
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar definitivamente tu cuenta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se borrarán de forma permanente tu perfil, tus evaluaciones físicas y todo el historial
+                  de entrenamientos. No podremos recuperar la información después de confirmar.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Sí, eliminar todo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </section>
       </main>
     </div>
   );
