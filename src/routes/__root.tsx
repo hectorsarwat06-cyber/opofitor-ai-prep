@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { Footer } from "@/components/Footer";
+import { FeedbackFab } from "@/components/FeedbackFab";
 
 import appCss from "../styles.css?url";
 
@@ -114,7 +116,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <div className="flex min-h-screen flex-col">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <Footer />
+      </div>
+      <FeedbackFab />
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
