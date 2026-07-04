@@ -62,7 +62,7 @@ function TestInicial() {
         id: u.user.id,
         genero,
       });
-      if (profErr) throw profErr;
+      if (profErr) throw Object.assign(new Error(profErr.message), { supa: profErr, where: "profiles.upsert" });
       // Guarda evaluación
       const { error: insErr } = await supabase.from("evaluaciones").insert({
         user_id: u.user.id,
@@ -72,11 +72,20 @@ function TestInicial() {
         tiempo_agilidad: ag,
         vam_estimada: vam,
       });
-      if (insErr) throw insErr;
+      if (insErr) throw Object.assign(new Error(insErr.message), { supa: insErr, where: "evaluaciones.insert" });
       toast.success("Macrociclo generado y marcas guardadas");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error guardando los datos";
-      toast.error(msg);
+      const supa = (e as { supa?: { message?: string; details?: string; hint?: string; code?: string }; where?: string }).supa;
+      const where = (e as { where?: string }).where;
+      const message = supa?.message ?? (e instanceof Error ? e.message : "Error desconocido");
+      const details = supa?.details ? ` · details: ${supa.details}` : "";
+      const hint = supa?.hint ? ` · hint: ${supa.hint}` : "";
+      const code = supa?.code ? ` [${supa.code}]` : "";
+      const prefix = where ? `${where}${code}: ` : code ? `${code} ` : "";
+      const full = `${prefix}${message}${details}${hint}`;
+      console.error("[test-inicial] supabase error", { where, supa, error: e });
+      toast.error(full, { duration: 15000, description: "Copia este texto si necesitas soporte." });
+      setError(full);
       setGenerating(false);
       return;
     }
