@@ -45,13 +45,19 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   useRequireAuth();
   const { plan, loading: planLoading, needsInitialTest } = useTrainingPlan();
-  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-  const sesionHoy = plan ? sesionDeHoy(plan) : null;
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const todayIdx = isMounted ? (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1) : -1;
+  const sesionHoy = plan && isMounted && todayIdx !== -1 ? plan.sesiones[todayIdx] : null;
   const macro = useMacrocycle();
   const navigate = useNavigate();
   useEffect(() => {
     if (needsInitialTest) navigate({ to: "/test-inicial" });
   }, [needsInitialTest, navigate]);
+
   return (
     <div className="min-h-screen bg-background text-foreground relative">
       <div
@@ -129,7 +135,7 @@ function Dashboard() {
           <div className="lg:col-span-2 glass rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-40" style={{ background: "var(--gradient-glow)" }} />
             <div className="relative">
-              {planLoading ? (
+              {planLoading || !isMounted ? (
                 <p className="text-sm text-muted-foreground">Cargando tu sesión personalizada…</p>
               ) : !sesionHoy ? (
                 <div className="space-y-3">
