@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useTrainingPlan } from "@/hooks/use-training-plan";
@@ -31,12 +31,17 @@ function PlanSemanal() {
   useRequireAuth();
   const { plan, loading, evaluacion, needsInitialTest } = useTrainingPlan();
   const navigate = useNavigate();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     if (needsInitialTest) navigate({ to: "/test-inicial" });
   }, [needsInitialTest, navigate]);
-  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const todayIdx = isMounted ? (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1) : -1;
 
-  if (loading) {
+  if (loading || !isMounted) {
     return (
       <div className="min-h-screen grid place-items-center text-muted-foreground">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
