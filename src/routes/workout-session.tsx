@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-auth";
@@ -54,7 +54,13 @@ function WorkoutSession() {
   useRequireAuth();
   const navigate = useNavigate();
   const { plan, loading } = useTrainingPlan();
-  const sesion = useMemo(() => (plan ? sesionDeHoy(plan) : null), [plan]);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const todayIdx = isMounted ? (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1) : -1;
+  const sesion = plan && isMounted && todayIdx !== -1 ? plan.sesiones[todayIdx] : null;
 
   const [sessionRPE, setSessionRPE] = useState<number[]>([7]);
   const [rpeOpen, setRpeOpen] = useState(false);
@@ -123,7 +129,7 @@ function WorkoutSession() {
       </header>
 
       <main className="px-4 pb-32 max-w-4xl mx-auto animate-fade-up space-y-6">
-        {loading ? (
+        {loading || !isMounted ? (
           <div className="glass rounded-2xl p-10 text-center">
             <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
             <p className="text-sm text-muted-foreground mt-3">
