@@ -54,6 +54,10 @@ export function useTrainingPlan(): UseTrainingPlanResult {
     (async () => {
       setLoading(true);
       try {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        const limitDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
         const [perfilRes, evalRes, logsRes] = await Promise.all([
           supabase
             .from("profiles")
@@ -71,7 +75,7 @@ export function useTrainingPlan(): UseTrainingPlanResult {
             .from("entrenamientos_log")
             .select("tipo_sesion, rpe_sesion, fecha_sesion")
             .eq("user_id", user.id)
-            .gte("fecha_sesion", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10))
+            .gte("fecha_sesion", limitDate)
             .order("fecha_sesion", { ascending: false }),
         ]);
         if (cancel) return;
