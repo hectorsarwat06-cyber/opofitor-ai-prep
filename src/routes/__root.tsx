@@ -75,14 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "opoFITor — Aprueba las físicas de Policía Nacional con IA" },
+      { name: "description", content: "Planes de entrenamiento personalizados con IA para aprobar las pruebas físicas de la Policía Nacional. Adaptación semanal, dominadas, carrera y control de fatiga." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "opoFITor — Aprueba las físicas de Policía Nacional con IA" },
+      { property: "og:description", content: "Planes de entrenamiento personalizados con IA para aprobar las pruebas físicas de la Policía Nacional. Adaptación semanal, dominadas, carrera y control de fatiga." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "opoFITor — Aprueba las físicas de Policía Nacional con IA" },
+      { name: "twitter:description", content: "Planes de entrenamiento personalizados con IA para aprobar las pruebas físicas de la Policía Nacional. Adaptación semanal, dominadas, carrera y control de fatiga." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29021b2f-9c62-4c0f-baa0-c30785383cca/id-preview-d37a0b8a--978dc23f-a728-4e23-9691-7f4053cdf8b6.lovable.app-1781706511941.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/29021b2f-9c62-4c0f-baa0-c30785383cca/id-preview-d37a0b8a--978dc23f-a728-4e23-9691-7f4053cdf8b6.lovable.app-1781706511941.png" },
     ],
     links: [
       {
