@@ -61,7 +61,7 @@ export function useTrainingPlan(): UseTrainingPlanResult {
         const [perfilRes, evalRes, logsRes] = await Promise.all([
           supabase
             .from("profiles")
-            .select("genero, dias_disponibles, fecha_examen")
+            .select("genero, dias_disponibles, fecha_examen, peso, altura")
             .eq("id", user.id)
             .maybeSingle(),
           supabase
@@ -84,6 +84,8 @@ export function useTrainingPlan(): UseTrainingPlanResult {
           genero: (perfilRes.data?.genero as Genero | null) ?? null,
           dias_disponibles: (perfilRes.data?.dias_disponibles as DiaSemana[] | null) ?? ["L", "X", "V"],
           fecha_examen: perfilRes.data?.fecha_examen ?? null,
+          peso: perfilRes.data?.peso ?? null,
+          altura: perfilRes.data?.altura ?? null,
         };
         setPerfil(p);
 
@@ -127,11 +129,13 @@ export function useTrainingPlan(): UseTrainingPlanResult {
   const plan = useMemo<PlanSemanal | null>(() => {
     if (!perfil || !evaluacion) return null;
     try {
+      const activityLevel = typeof window !== "undefined" ? localStorage.getItem("opofitor_activity_level") : null;
       return construirPlanSemanal({
         perfil,
         evaluacion,
         logsSemanaAnterior: logs,
         semana,
+        nivelActividad: activityLevel || "intermedio",
       });
     } catch (e) {
       console.error("[training-engine] error generando plan", e);
@@ -144,7 +148,9 @@ export function useTrainingPlan(): UseTrainingPlanResult {
       !evaluacion ||
       !evaluacion.tiempo_1000m ||
       evaluacion.fuerza_tren_superior == null ||
-      !perfil?.genero
+      !perfil?.genero ||
+      !perfil?.peso ||
+      !perfil?.altura
     );
 
   return {
