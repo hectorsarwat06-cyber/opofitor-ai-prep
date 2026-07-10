@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Shield, Timer, Dumbbell, Loader2, Sparkles, ArrowRight, Activity, User,
+  Scale, Ruler, Calendar, Check
 } from "lucide-react";
 import { calcularVAM, type Genero } from "@/lib/training-engine";
 
@@ -25,6 +26,10 @@ function TestInicial() {
   const navigate = useNavigate();
   useRequireAuth();
   const [genero, setGenero] = useState<Genero | "">("");
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
+  const [activityLevel, setActivityLevel] = useState<"principiante" | "intermedio" | "avanzado">("intermedio");
+  const [days, setDays] = useState<string[]>(["L", "X", "V"]);
   const [minutes, setMinutes] = useState("");
   const [seconds, setSeconds] = useState("");
   const [fuerza, setFuerza] = useState("");
@@ -33,16 +38,31 @@ function TestInicial() {
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    if (genero !== "Hombre" && genero !== "Mujer") {
-      setError("Selecciona tu género para diferenciar los baremos.");
-      return;
-    }
+    const w = parseFloat(weight);
+    const h = parseFloat(height);
     const m = parseInt(minutes, 10);
     const s = parseInt(seconds, 10);
     const f = parseFloat(fuerza);
     const ag = parseFloat(agilidad);
+
+    if (genero !== "Hombre" && genero !== "Mujer") {
+      setError("Selecciona tu género para diferenciar los baremos.");
+      return;
+    }
+    if (isNaN(h) || h <= 100 || h > 250) {
+      setError("Introduce una altura válida en centímetros (ej. 175 cm).");
+      return;
+    }
+    if (isNaN(w) || w <= 30 || w > 250) {
+      setError("Introduce un peso válido en kilogramos (ej. 70 kg).");
+      return;
+    }
+    if (days.length === 0) {
+      setError("Selecciona al menos un día disponible para entrenar.");
+      return;
+    }
     if (isNaN(m) || isNaN(s) || s < 0 || s > 59 || isNaN(f) || f < 0 || isNaN(ag) || ag <= 0) {
-      setError("Introduce marcas válidas en todos los tests.");
+      setError("Introduce marcas válidas en todos los tests de marcas.");
       return;
     }
     setError(null);
@@ -51,16 +71,20 @@ function TestInicial() {
     const vam = calcularVAM(tiempo);
     try {
       localStorage.setItem("opofitor_macrocycle_start", new Date().toISOString());
+      localStorage.setItem("opofitor_activity_level", activityLevel);
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.error("Necesitas iniciar sesión");
         navigate({ to: "/auth" });
         return;
       }
-      // Guarda género en perfil
+      // Guarda género y datos físicos en perfil
       const { error: profErr } = await supabase.from("profiles").upsert({
         id: u.user.id,
         genero,
+        peso: w,
+        altura: h,
+        dias_disponibles: days,
       });
       if (profErr) throw Object.assign(new Error(profErr.message), { supa: profErr, where: "profiles.upsert" });
       // Guarda evaluación
@@ -157,6 +181,107 @@ function TestInicial() {
           </div>
         </div>
 
+        {/* Datos Corporales */}
+        <div className="mt-6 glass rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg glass grid place-items-center">
+              <Scale className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 2</p>
+              <h2 className="text-xl font-display font-bold">Datos Corporales</h2>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">Tu peso y altura se usan para calcular la fuerza relativa y calibrar las cargas.</p>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="height">Altura (cm)</Label>
+              <Input id="height" inputMode="numeric" placeholder="175" value={height} onChange={(e) => setHeight(e.target.value)} className="mt-1.5 h-12 text-lg font-display font-semibold text-center" />
+            </div>
+            <div>
+              <Label htmlFor="weight">Peso (kg)</Label>
+              <Input id="weight" inputMode="decimal" placeholder="70" value={weight} onChange={(e) => setWeight(e.target.value)} className="mt-1.5 h-12 text-lg font-display font-semibold text-center" />
+            </div>
+          </div>
+        </div>
+
+        {/* Experiencia y Disponibilidad */}
+        <div className="mt-6 glass rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg glass grid place-items-center">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 3</p>
+              <h2 className="text-xl font-display font-bold">Experiencia y Disponibilidad</h2>
+            </div>
+          </div>
+          
+          <div className="mt-5">
+            <Label className="text-sm font-semibold">¿Cuál es tu nivel de actividad física actual?</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Esto adaptará la progresión y el volumen inicial para evitar sobreentrenamiento y lesiones.</p>
+            <div className="mt-3 grid grid-cols-3 gap-2.5">
+              {(["principiante", "intermedio", "avanzado"] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setActivityLevel(level)}
+                  className={`h-14 rounded-xl border transition-all text-xs font-display font-bold capitalize flex flex-col items-center justify-center ${
+                    activityLevel === level
+                      ? "bg-[image:var(--gradient-primary)] border-primary text-primary-foreground shadow-[var(--shadow-glow)]"
+                      : "border-border bg-card/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  <span>{level === "principiante" ? "Principiante" : level === "intermedio" ? "Intermedio" : "Avanzado"}</span>
+                  <span className="block text-[8px] font-normal opacity-80 mt-0.5 font-sans lowercase">
+                    {level === "principiante" ? "volumen suave" : level === "intermedio" ? "estándar" : "volumen alto"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <Label className="text-sm font-semibold">¿Qué días prefieres entrenar?</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Te recomendamos entrenar de 3 a 5 días para una preparación óptima.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                { k: "L", label: "Lunes" },
+                { k: "M", label: "Martes" },
+                { k: "X", label: "Miércoles" },
+                { k: "J", label: "Jueves" },
+                { k: "V", label: "Viernes" },
+                { k: "S", label: "Sábado" },
+                { k: "D", label: "Domingo" },
+              ].map((d) => {
+                const active = days.includes(d.k);
+                return (
+                  <button
+                    key={d.k}
+                    type="button"
+                    onClick={() => {
+                      setDays((prev) =>
+                        prev.includes(d.k) ? prev.filter((x) => x !== d.k) : [...prev, d.k]
+                      );
+                    }}
+                    className={`relative h-12 w-12 rounded-xl border transition-all flex flex-col items-center justify-center ${
+                      active
+                        ? "bg-[image:var(--gradient-primary)] border-primary text-primary-foreground shadow-[var(--shadow-glow)]"
+                        : "border-border bg-card/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-sm font-display font-bold leading-none">{d.k}</span>
+                    <span className="text-[7px] uppercase tracking-wider mt-0.5 leading-none">{d.label.slice(0, 3)}</span>
+                    {active && (
+                      <Check className="absolute top-0.5 right-0.5 h-2 w-2 text-primary-foreground" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         <div className="mt-6 grid md:grid-cols-2 gap-5">
           {/* Test carrera */}
           <div className="glass rounded-2xl p-6 relative overflow-hidden">
@@ -167,7 +292,7 @@ function TestInicial() {
                   <Timer className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 02</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 04</p>
                   <h2 className="text-xl font-display font-bold">Carrera 1000 m</h2>
                 </div>
               </div>
@@ -197,7 +322,7 @@ function TestInicial() {
                   <Dumbbell className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 03</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 05</p>
                   <h2 className="text-xl font-display font-bold">Fuerza tren superior</h2>
                 </div>
               </div>
@@ -223,7 +348,7 @@ function TestInicial() {
                   <Activity className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 04</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 06</p>
                   <h2 className="text-xl font-display font-bold">Circuito de agilidad</h2>
                 </div>
               </div>
