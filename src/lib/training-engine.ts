@@ -20,6 +20,8 @@ export interface PerfilUsuario {
   genero: Genero | null;
   dias_disponibles: DiaSemana[] | string[] | null;
   fecha_examen: string | null;
+  peso?: number | null;
+  altura?: number | null;
 }
 
 export interface EvaluacionInicial {
@@ -272,6 +274,7 @@ function normalizarDias(perfil: PerfilUsuario): DiaSemana[] {
   return DIAS_ORDEN.filter((d) => dd.includes(d));
 }
 
+// ---- Construcción semanal ----
 function rotacionSesiones(n: number): TipoResistencia[] {
   const base: TipoResistencia[] = ["potencia", "umbral", "capacidad"];
   return Array.from({ length: n }, (_, i) => base[i % base.length]);
@@ -346,8 +349,18 @@ export function construirPlanSemanal(args: {
   evaluacion: EvaluacionInicial;
   logsSemanaAnterior: LogEntrenamiento[];
   semana: number;
+  nivelActividad?: string;
 }): PlanSemanal {
   const ajuste = analizarRPE(args.logsSemanaAnterior ?? []);
+  
+  if (args.nivelActividad === "principiante") {
+    ajuste.factorVolumen *= 0.85;
+    ajuste.mensaje = `${ajuste.mensaje} [Adaptación principiante: -15% volumen]`;
+  } else if (args.nivelActividad === "avanzado") {
+    ajuste.factorVolumen *= 1.1;
+    ajuste.mensaje = `${ajuste.mensaje} [Impulso avanzado: +10% volumen]`;
+  }
+
   const diasActivos = normalizarDias(args.perfil);
   const rot = rotacionSesiones(Math.max(diasActivos.length, 1));
   const sesiones: SesionPrescrita[] = DIAS_ORDEN.map((dia) => {
