@@ -28,6 +28,7 @@ function TestInicial() {
   const [genero, setGenero] = useState<Genero | "">("");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [examDate, setExamDate] = useState("");
   const [activityLevel, setActivityLevel] = useState<"principiante" | "intermedio" | "avanzado">("intermedio");
   const [days, setDays] = useState<string[]>(["L", "X", "V"]);
   const [minutes, setMinutes] = useState("");
@@ -72,6 +73,7 @@ function TestInicial() {
     try {
       localStorage.setItem("opofitor_macrocycle_start", new Date().toISOString());
       localStorage.setItem("opofitor_activity_level", activityLevel);
+      if (examDate) localStorage.setItem("opofitor_exam_date", examDate);
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.error("Necesitas iniciar sesión");
@@ -85,6 +87,7 @@ function TestInicial() {
         peso: w,
         altura: h,
         dias_disponibles: days,
+        fecha_examen: examDate || null,
       });
       if (profErr) throw Object.assign(new Error(profErr.message), { supa: profErr, where: "profiles.upsert" });
       // Guarda evaluación
@@ -181,6 +184,24 @@ function TestInicial() {
           </div>
         </div>
 
+        {/* Fecha del Examen */}
+        <div className="mt-6 glass rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg glass grid place-items-center">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 2</p>
+              <h2 className="text-xl font-display font-bold">Fecha del Examen</h2>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">¿Cuándo tienes previsto realizar las pruebas físicas oficiales? (Sirve para calcular las semanas del macrociclo).</p>
+          <div className="mt-4 max-w-sm">
+            <Label htmlFor="examDate">Día oficial del examen (Opcional)</Label>
+            <Input id="examDate" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="mt-1.5 h-12" />
+          </div>
+        </div>
+
         {/* Datos Corporales */}
         <div className="mt-6 glass rounded-2xl p-6">
           <div className="flex items-center gap-3">
@@ -188,7 +209,7 @@ function TestInicial() {
               <Scale className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 2</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 3</p>
               <h2 className="text-xl font-display font-bold">Datos Corporales</h2>
             </div>
           </div>
@@ -212,7 +233,7 @@ function TestInicial() {
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 3</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Paso 4</p>
               <h2 className="text-xl font-display font-bold">Experiencia y Disponibilidad</h2>
             </div>
           </div>
@@ -292,7 +313,7 @@ function TestInicial() {
                   <Timer className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 04</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 05</p>
                   <h2 className="text-xl font-display font-bold">Carrera 1000 m</h2>
                 </div>
               </div>
@@ -322,7 +343,7 @@ function TestInicial() {
                   <Dumbbell className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 05</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 06</p>
                   <h2 className="text-xl font-display font-bold">Fuerza tren superior</h2>
                 </div>
               </div>
@@ -348,7 +369,7 @@ function TestInicial() {
                   <Activity className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 06</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Test 07</p>
                   <h2 className="text-xl font-display font-bold">Circuito de agilidad</h2>
                 </div>
               </div>
